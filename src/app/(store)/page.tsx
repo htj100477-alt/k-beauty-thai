@@ -211,48 +211,51 @@ export default async function Home({ searchParams }: PageProps) {
         )}
       </section>
 
-      {/* 4. Product Grid (2-Column Premium Mobile Layout) */}
+      {/* 4. Product Grid (2-Column Premium Mobile Layout matching Phone Switch Hub style) */}
       <section className="grid grid-cols-2 gap-3">
         {products.length > 0 ? (
           products.map((product) => (
-            <div key={product.id} className="bg-white border border-[#e2e8f0] rounded-2xl p-4 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-[#0d9488]/30 transition-all duration-300 group">
-              <div className="relative w-full aspect-square bg-[#f8fafc] rounded-xl overflow-hidden mb-3 border border-[#f1f5f9] z-0">
+            <div key={product.id} className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md hover:border-[#0d9488]/30 transition-all duration-300 group">
+              {/* Full-bleed image at the top of the card */}
+              <div className="relative w-full aspect-square bg-[#f8fafc] overflow-hidden z-0">
                 <SafeImage
                   src={product.thumbnail_url}
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <span className="absolute top-1.5 left-1.5 px-2 py-0.5 text-[8px] font-black rounded-md bg-amber-500 text-white shadow-sm uppercase z-10">
+                <span className="absolute top-2.5 left-2.5 px-2 py-0.5 text-[8px] font-black rounded bg-amber-500 text-white shadow-sm uppercase z-10">
                   DDP 면세
                 </span>
               </div>
 
-              <div className="flex-grow flex flex-col justify-between gap-3">
+              {/* Padded details block below the image */}
+              <div className="p-3.5 flex-grow flex flex-col justify-between gap-2.5">
                 <div>
-                  <span className="text-[10px] font-extrabold text-[#0d9488] uppercase tracking-wider block">
+                  <span className="text-[9px] font-extrabold text-[#0d9488] uppercase tracking-wider block">
                     {product.brand}
                   </span>
-                  <h3 className="text-xs font-bold text-slate-800 line-clamp-2 h-9 leading-tight mt-1 overflow-hidden">
+                  <h3 className="text-[11px] font-bold text-slate-800 line-clamp-2 h-8 leading-tight mt-0.5 overflow-hidden">
                     {product.name}
                   </h3>
                 </div>
 
-                <div className="pt-2.5 border-t border-[#f1f5f9] flex flex-col gap-0.5">
-                  <span className="text-[10px] text-slate-400 line-through">
-                    {product.price_krw.toLocaleString()}원
-                  </span>
-                  <div className="flex justify-between items-center mt-1">
-                    <span className="text-base font-extrabold text-slate-800">
+                <div className="pt-2 border-t border-[#f1f5f9] flex flex-col gap-2">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-slate-400 line-through leading-none mb-0.5">
+                      {product.price_krw.toLocaleString()}원
+                    </span>
+                    <span className="text-sm font-black text-slate-800 leading-none">
                       {parseFloat(product.price_thb).toLocaleString()} <span className="text-[10px] text-[#0d9488] font-bold">THB</span>
                     </span>
-                    
-                    <Link
-                      href={`/products/${product.goods_no}`}
-                      className="px-3.5 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider bg-[#0d9488]/10 text-[#0d9488] border border-[#0d9488]/20 hover:bg-[#0d9488] hover:text-white transition-all duration-300"
-                    >
-                      Buy
-                    </Link>
                   </div>
+                  
+                  {/* Full-width primary ordering button */}
+                  <Link
+                    href={`/products/${product.goods_no}`}
+                    className="w-full py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white rounded-lg text-[10px] font-extrabold text-center transition-all duration-300 block shadow-sm"
+                  >
+                    구매하기
+                  </Link>
                 </div>
               </div>
             </div>
