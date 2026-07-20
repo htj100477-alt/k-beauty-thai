@@ -1,28 +1,5 @@
 -- Supabase Database Schema for K-Beauty Thai Direct Purchase E-commerce
 
--- 0. Drop existing policies to prevent "policy already exists" errors during re-runs
-DROP POLICY IF EXISTS "Allow users to read their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Allow admins/staff to select all profiles" ON public.profiles;
-DROP POLICY IF EXISTS "Allow admins to update profiles" ON public.profiles;
-
-DROP POLICY IF EXISTS "Allow public read access to categories" ON public.categories;
-DROP POLICY IF EXISTS "Allow admins/staff to manage categories" ON public.categories;
-
-DROP POLICY IF EXISTS "Allow public read access to products" ON public.products;
-DROP POLICY IF EXISTS "Allow admins/staff to manage products" ON public.products;
-
-DROP POLICY IF EXISTS "Allow public read access to settings" ON public.settings;
-DROP POLICY IF EXISTS "Allow admins/staff to manage settings" ON public.settings;
-
-DROP POLICY IF EXISTS "Allow public/users to place orders" ON public.orders;
-DROP POLICY IF EXISTS "Allow users to read their own orders" ON public.orders;
-DROP POLICY IF EXISTS "Allow admins/staff to manage all orders" ON public.orders;
-
-DROP POLICY IF EXISTS "Allow public/users to insert order items" ON public.order_items;
-DROP POLICY IF EXISTS "Allow users to read their own order items" ON public.order_items;
-DROP POLICY IF EXISTS "Allow admins/staff to manage all order items" ON public.order_items;
-
-
 -- 1. Create Profiles Table (Synced automatically with auth.users)
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
@@ -35,9 +12,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- Enable RLS on Profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+-- Drop and Recreate policies for Profiles (Guaranteed table exists now)
+DROP POLICY IF EXISTS "Allow users to read their own profile" ON public.profiles;
 CREATE POLICY "Allow users to read their own profile" ON public.profiles
     FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Allow admins/staff to select all profiles" ON public.profiles;
 CREATE POLICY "Allow admins/staff to select all profiles" ON public.profiles
     FOR SELECT USING (
         EXISTS (
@@ -47,6 +27,7 @@ CREATE POLICY "Allow admins/staff to select all profiles" ON public.profiles
         )
     );
 
+DROP POLICY IF EXISTS "Allow admins to update profiles" ON public.profiles;
 CREATE POLICY "Allow admins to update profiles" ON public.profiles
     FOR UPDATE USING (
         EXISTS (
@@ -68,9 +49,12 @@ CREATE TABLE IF NOT EXISTS public.categories (
 -- Enable RLS on Categories
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 
+-- Drop and Recreate policies for Categories
+DROP POLICY IF EXISTS "Allow public read access to categories" ON public.categories;
 CREATE POLICY "Allow public read access to categories" ON public.categories
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Allow admins/staff to manage categories" ON public.categories;
 CREATE POLICY "Allow admins/staff to manage categories" ON public.categories
     FOR ALL USING (
         EXISTS (
@@ -105,9 +89,12 @@ CREATE TABLE IF NOT EXISTS public.products (
 -- Enable RLS on Products
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
+-- Drop and Recreate policies for Products
+DROP POLICY IF EXISTS "Allow public read access to products" ON public.products;
 CREATE POLICY "Allow public read access to products" ON public.products
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Allow admins/staff to manage products" ON public.products;
 CREATE POLICY "Allow admins/staff to manage products" ON public.products
     FOR ALL USING (
         EXISTS (
@@ -129,9 +116,12 @@ CREATE TABLE IF NOT EXISTS public.settings (
 -- Enable RLS on Settings
 ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
 
+-- Drop and Recreate policies for Settings
+DROP POLICY IF EXISTS "Allow public read access to settings" ON public.settings;
 CREATE POLICY "Allow public read access to settings" ON public.settings
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Allow admins/staff to manage settings" ON public.settings;
 CREATE POLICY "Allow admins/staff to manage settings" ON public.settings
     FOR ALL USING (
         EXISTS (
@@ -163,12 +153,16 @@ CREATE TABLE IF NOT EXISTS public.orders (
 -- Enable RLS on Orders
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
+-- Drop and Recreate policies for Orders
+DROP POLICY IF EXISTS "Allow public/users to place orders" ON public.orders;
 CREATE POLICY "Allow public/users to place orders" ON public.orders
     FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow users to read their own orders" ON public.orders;
 CREATE POLICY "Allow users to read their own orders" ON public.orders
     FOR SELECT USING (auth.uid() = customer_id);
 
+DROP POLICY IF EXISTS "Allow admins/staff to manage all orders" ON public.orders;
 CREATE POLICY "Allow admins/staff to manage all orders" ON public.orders
     FOR ALL USING (
         EXISTS (
@@ -191,9 +185,12 @@ CREATE TABLE IF NOT EXISTS public.order_items (
 -- Enable RLS on Order Items
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
+-- Drop and Recreate policies for Order Items
+DROP POLICY IF EXISTS "Allow public/users to insert order items" ON public.order_items;
 CREATE POLICY "Allow public/users to insert order items" ON public.order_items
     FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow users to read their own order items" ON public.order_items;
 CREATE POLICY "Allow users to read their own order items" ON public.order_items
     FOR SELECT USING (
         EXISTS (
@@ -203,6 +200,7 @@ CREATE POLICY "Allow users to read their own order items" ON public.order_items
         )
     );
 
+DROP POLICY IF EXISTS "Allow admins/staff to manage all order items" ON public.order_items;
 CREATE POLICY "Allow admins/staff to manage all order items" ON public.order_items
     FOR ALL USING (
         EXISTS (
