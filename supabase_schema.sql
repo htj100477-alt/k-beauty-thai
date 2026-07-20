@@ -1,5 +1,28 @@
 -- Supabase Database Schema for K-Beauty Thai Direct Purchase E-commerce
 
+-- 0. Drop existing policies to prevent "policy already exists" errors during re-runs
+DROP POLICY IF EXISTS "Allow users to read their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Allow admins/staff to select all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow admins to update profiles" ON public.profiles;
+
+DROP POLICY IF EXISTS "Allow public read access to categories" ON public.categories;
+DROP POLICY IF EXISTS "Allow admins/staff to manage categories" ON public.categories;
+
+DROP POLICY IF EXISTS "Allow public read access to products" ON public.products;
+DROP POLICY IF EXISTS "Allow admins/staff to manage products" ON public.products;
+
+DROP POLICY IF EXISTS "Allow public read access to settings" ON public.settings;
+DROP POLICY IF EXISTS "Allow admins/staff to manage settings" ON public.settings;
+
+DROP POLICY IF EXISTS "Allow public/users to place orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow users to read their own orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow admins/staff to manage all orders" ON public.orders;
+
+DROP POLICY IF EXISTS "Allow public/users to insert order items" ON public.order_items;
+DROP POLICY IF EXISTS "Allow users to read their own order items" ON public.order_items;
+DROP POLICY IF EXISTS "Allow admins/staff to manage all order items" ON public.order_items;
+
+
 -- 1. Create Profiles Table (Synced automatically with auth.users)
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
@@ -199,12 +222,15 @@ BEGIN
     new.id,
     COALESCE(new.raw_user_meta_data->>'phone_number', split_part(new.email, '@', 1)),
     COALESCE(new.raw_user_meta_data->>'role', 'user')
-  );
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+-- Recreate trigger safety
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
