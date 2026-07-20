@@ -101,7 +101,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   };
 
   return (
-    <main className="py-6 px-4 w-full flex flex-col gap-6 bg-[#f4f6fa]">
+    <main className="w-full flex flex-col bg-[#f4f6fa] px-5 py-6 gap-6">
       {/* Back button */}
       <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-[#0d9488] transition-colors font-bold">
         ← Back to Storefront
