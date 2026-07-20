@@ -17,13 +17,11 @@ export default function SafeImage({ src, alt, className, ...props }: SafeImagePr
   return (
     <div className="relative w-full h-full bg-slate-50 flex items-center justify-center rounded-inherit overflow-hidden">
       {isBroken ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400 p-3 select-none">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-tr from-slate-50 to-[#f1f5f9] text-slate-400 select-none">
           {/* Beautiful cosmetic/leaf placeholder icon */}
-          <div className="w-10 h-10 rounded-full bg-slate-100/80 border border-slate-200/60 flex items-center justify-center mb-1.5 shadow-sm text-lg">
-            🌿
-          </div>
-          <span className="text-[9px] font-semibold text-slate-500 text-center line-clamp-2 px-2 leading-snug">
-            {alt}
+          <span className="text-2xl mb-1 filter drop-shadow-sm opacity-80">🌿</span>
+          <span className="text-[8px] font-bold text-slate-400/80 tracking-widest uppercase mt-0.5">
+            K-Beauty
           </span>
         </div>
       ) : (

@@ -19,10 +19,10 @@ export default function StoreLayout({
   return (
     <div className="min-h-screen bg-[#eaedf2] flex justify-center items-start">
       {/* Mobile Frame Container matching phoneswitchhub */}
-      <div className="w-full max-w-[480px] min-h-screen bg-[#f4f6fa] border-x border-[#e2e8f0] shadow-2xl relative pb-20 flex flex-col justify-between">
+      <div className="w-full max-w-[480px] min-h-screen bg-[#f4f6fa] border-x border-[#e2e8f0] shadow-2xl relative pb-28 flex flex-col justify-between">
         
         {/* Top Navbar matching 3rd screenshot */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e2e8f0] px-4 py-3.5 flex justify-between items-center">
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e2e8f0] px-5 py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#0d9488] to-[#14b8a6] flex items-center justify-center text-white text-base shadow-sm">
               🌿
