@@ -19,7 +19,7 @@ export default function StoreLayout({
   return (
     <div className="h-screen w-screen bg-[#eaedf2] flex justify-center items-center p-0 sm:p-4 md:p-6 overflow-hidden">
       {/* Mobile Frame Container matching phoneswitchhub */}
-      <div className="w-full max-w-[480px] h-full sm:h-[92vh] sm:max-h-[880px] bg-[#f4f6fa] sm:rounded-[2rem] sm:border sm:border-slate-300/80 sm:shadow-2xl relative flex flex-col justify-between overflow-hidden">
+      <div className="w-full max-w-[480px] h-full sm:h-[92vh] sm:max-h-[880px] bg-[#eef2f6] sm:rounded-[2rem] sm:border sm:border-slate-300/80 sm:shadow-2xl relative flex flex-col justify-between overflow-hidden">
         
         {/* Top Navbar matching 3rd screenshot */}
         <header className="bg-white border-b border-[#e2e8f0] px-5 py-4 flex justify-between items-center z-40 flex-shrink-0 w-full">

@@ -155,7 +155,7 @@ export default async function Home({ searchParams }: PageProps) {
   const categoriesCount = categories.length;
 
   return (
-    <main className="w-full flex flex-col bg-[#f4f6fa] px-5 py-6 gap-6">
+    <main className="flex flex-col bg-[#eef2f6]" style={{ paddingLeft: '20px', paddingRight: '20px', paddingTop: '24px', paddingBottom: '24px', gap: '24px', boxSizing: 'border-box' }}>
       
       {/* 1. Gradient Hero Banner matching 3rd screenshot */}
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-tr from-[#6366f1] via-[#8b5cf6] to-[#ec4899] p-6 text-white shadow-md">
