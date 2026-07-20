@@ -12,7 +12,8 @@ export default function AdminLayout({
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminOrStaff, setIsAdminOrStaff] = useState(false);
+  const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
     async function checkAuth() {
@@ -25,12 +26,29 @@ export default function AdminLayout({
           return;
         }
 
-        // Check user role from metadata
-        const userRole = user.user_metadata?.role;
-        if (userRole === 'admin') {
-          setIsAdmin(true);
+        // Fetch dynamic role from public.profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError || !profile) {
+          // Fallback to metadata role if profile fetch fails
+          const fallbackRole = user.user_metadata?.role;
+          if (fallbackRole === 'admin' || fallbackRole === 'staff') {
+            setIsAdminOrStaff(true);
+            setUserRole(fallbackRole);
+          } else {
+            console.log('No profile role and fallback role not admin/staff.');
+          }
         } else {
-          console.log('User is not an admin, access denied.');
+          if (profile.role === 'admin' || profile.role === 'staff') {
+            setIsAdminOrStaff(true);
+            setUserRole(profile.role);
+          } else {
+            console.log(`User role ${profile.role} is not admin/staff.`);
+          }
         }
       } catch (err) {
         console.error('Auth check error:', err);
@@ -46,18 +64,18 @@ export default function AdminLayout({
     return (
       <div className="min-h-screen bg-[#08070d] flex flex-col items-center justify-center text-slate-100">
         <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-sm text-slate-400">관리자 권한 확인 중 (Verifying Admin Authorization)...</p>
+        <p className="text-sm text-slate-400">관리자 권한 확인 중 (Verifying Authorization)...</p>
       </div>
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdminOrStaff) {
     return (
       <div className="min-h-screen bg-[#08070d] flex flex-col items-center justify-center text-slate-100 px-4 text-center">
         <span className="text-6xl mb-6">🔒</span>
         <h1 className="text-2xl font-bold mb-2">Access Denied (접근 거부)</h1>
         <p className="text-sm text-slate-400 max-w-md mb-8">
-          이 페이지는 관리자(Admin) 계정만 접근할 수 있습니다. 일반 회원은 접근이 불가합니다.
+          이 페이지는 관리자(Admin) 또는 스탭(Staff) 계정만 접근할 수 있습니다.
         </p>
         <div className="flex gap-4">
           <button
@@ -86,7 +104,7 @@ export default function AdminLayout({
           <div className="flex items-center gap-2">
             <span className="text-xl">🍀</span>
             <span className="font-extrabold text-sm tracking-wider">
-              OLIVE YOUNG THAI <span className="text-gradient">ADMIN</span>
+              OLIVE YOUNG THAI <span className="text-gradient">ADMIN ({userRole.toUpperCase()})</span>
             </span>
           </div>
           <div className="flex items-center gap-4">
