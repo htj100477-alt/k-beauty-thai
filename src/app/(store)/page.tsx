@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/server';
+import SafeImage from '@/components/SafeImage';
 
 interface PageProps {
   searchParams: Promise<{ category?: string }>;
@@ -215,13 +216,13 @@ export default async function Home({ searchParams }: PageProps) {
         {products.length > 0 ? (
           products.map((product) => (
             <div key={product.id} className="bg-white border border-[#e2e8f0] rounded-2xl p-3 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-[#0d9488]/30 transition-all duration-300 group">
-              <div className="relative w-full aspect-square bg-[#f8fafc] rounded-xl overflow-hidden mb-2.5 border border-[#f1f5f9]">
-                <img
+              <div className="relative w-full aspect-square bg-[#f8fafc] rounded-xl overflow-hidden mb-2.5 border border-[#f1f5f9] z-0">
+                <SafeImage
                   src={product.thumbnail_url}
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <span className="absolute top-1.5 left-1.5 px-2 py-0.5 text-[8px] font-black rounded-md bg-amber-500 text-white shadow-sm uppercase">
+                <span className="absolute top-1.5 left-1.5 px-2 py-0.5 text-[8px] font-black rounded-md bg-amber-500 text-white shadow-sm uppercase z-10">
                   DDP 면세
                 </span>
               </div>
@@ -231,7 +232,7 @@ export default async function Home({ searchParams }: PageProps) {
                   <span className="text-[9px] font-extrabold text-[#0d9488] uppercase tracking-wider block">
                     {product.brand}
                   </span>
-                  <h3 className="text-[11px] font-bold text-slate-800 line-clamp-2 min-h-[30px] leading-tight mt-0.5">
+                  <h3 className="text-[11px] font-bold text-slate-800 line-clamp-2 h-8 leading-tight mt-0.5 overflow-hidden">
                     {product.name}
                   </h3>
                 </div>
@@ -247,7 +248,7 @@ export default async function Home({ searchParams }: PageProps) {
                     
                     <Link
                       href={`/products/${product.goods_no}`}
-                      className="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 hover:bg-[#0d9488] hover:text-white hover:border-[#0d9488] transition-all duration-300"
+                      className="px-3 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider bg-[#0d9488]/10 text-[#0d9488] border border-[#0d9488]/20 hover:bg-[#0d9488] hover:text-white transition-all duration-300"
                     >
                       Buy
                     </Link>

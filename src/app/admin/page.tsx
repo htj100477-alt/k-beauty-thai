@@ -93,6 +93,7 @@ function DashboardContent() {
 
   const [newCatKo, setNewCatKo] = useState('');
   const [newCatEn, setNewCatEn] = useState('');
+  const [newCatTh, setNewCatTh] = useState('');
   const [newCatParentId, setNewCatParentId] = useState('');
 
   // Initial Data Loading
@@ -249,6 +250,7 @@ function DashboardContent() {
       const { error } = await supabase.from('categories').insert({
         name_ko: newCatKo,
         name_en: newCatEn,
+        name_th: newCatTh || null,
         parent_id: newCatParentId || null
       });
 
@@ -256,6 +258,7 @@ function DashboardContent() {
       alert('카테고리가 추가되었습니다!');
       setNewCatKo('');
       setNewCatEn('');
+      setNewCatTh('');
       setNewCatParentId('');
       loadAllData();
     } catch (err: any) {
@@ -609,6 +612,16 @@ function DashboardContent() {
                   />
                 </div>
                 <div>
+                  <label className="text-slate-500 font-bold block mb-1">카테고리 태국어명 (선택)</label>
+                  <input
+                    type="text"
+                    value={newCatTh}
+                    onChange={(e) => setNewCatTh(e.target.value)}
+                    placeholder="예: ดูแลผิวหน้า"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
+                  />
+                </div>
+                <div>
                   <label className="text-slate-500 font-bold block mb-1">상위 카테고리 (대분류)</label>
                   <select
                     value={newCatParentId}
@@ -638,9 +651,12 @@ function DashboardContent() {
                   return (
                     <div key={main.id} className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
                       <div className="flex justify-between items-center mb-3 pb-1.5 border-b border-slate-100">
-                        <div className="flex items-baseline gap-2">
+                        <div className="flex items-baseline gap-2 flex-wrap">
                           <span className="font-extrabold text-slate-900 text-xs sm:text-sm">{main.name_ko}</span>
                           <span className="text-[9px] text-slate-400 font-bold uppercase">{main.name_en}</span>
+                          {main.name_th && (
+                            <span className="text-[9px] text-teal-600 font-bold">{main.name_th}</span>
+                          )}
                         </div>
                         <span className="text-[9px] bg-slate-200/80 text-slate-600 font-black px-2 py-0.5 rounded-full">
                           소분류 {subs.length}개
@@ -651,7 +667,12 @@ function DashboardContent() {
                           {subs.map((sub) => (
                             <div key={sub.id} className="p-2.5 bg-white border border-slate-200 rounded-lg hover:border-[#7c3aed]/30 hover:shadow-sm transition-all flex flex-col justify-center">
                               <span className="font-bold text-slate-700 text-[11px]">{sub.name_ko}</span>
-                              <span className="text-[8px] text-slate-400 uppercase font-medium mt-0.5">{sub.name_en}</span>
+                              <div className="flex flex-col mt-0.5">
+                                <span className="text-[8px] text-slate-400 uppercase font-semibold">{sub.name_en}</span>
+                                {sub.name_th && (
+                                  <span className="text-[8px] text-teal-600 font-bold">{sub.name_th}</span>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
