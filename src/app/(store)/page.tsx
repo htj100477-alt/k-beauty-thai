@@ -317,8 +317,8 @@ export default async function Home({ searchParams }: PageProps) {
                 </span>
               </div>
 
-              {/* Padded details block below the image using absolute inline styles to guarantee rendering */}
-              <div className="flex-grow flex flex-col justify-between" style={{ padding: '14px', gap: '12px' }}>
+              {/* Padded details block below the image */}
+              <div className="flex-grow flex flex-col justify-between p-3 gap-3">
                 <div>
                   <span className="text-[9px] font-extrabold text-[#0d9488] uppercase tracking-wider block">
                     {product.brand}
