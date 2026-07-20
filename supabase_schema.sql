@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS public.categories (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name_ko VARCHAR(100) UNIQUE NOT NULL, -- e.g., '스킨케어'
     name_en VARCHAR(100) NOT NULL,        -- e.g., 'Skincare'
+    name_th VARCHAR(100),                 -- e.g., 'ดูแลผิวหน้า'
+    parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

@@ -39,6 +39,8 @@ interface Category {
   id: string;
   name_ko: string;
   name_en: string;
+  name_th?: string | null;
+  parent_id?: string | null;
 }
 
 interface UserProfile {
@@ -91,6 +93,7 @@ function DashboardContent() {
 
   const [newCatKo, setNewCatKo] = useState('');
   const [newCatEn, setNewCatEn] = useState('');
+  const [newCatParentId, setNewCatParentId] = useState('');
 
   // Initial Data Loading
   const loadAllData = async () => {
@@ -245,13 +248,15 @@ function DashboardContent() {
     try {
       const { error } = await supabase.from('categories').insert({
         name_ko: newCatKo,
-        name_en: newCatEn
+        name_en: newCatEn,
+        parent_id: newCatParentId || null
       });
 
       if (error) throw error;
       alert('카테고리가 추가되었습니다!');
       setNewCatKo('');
       setNewCatEn('');
+      setNewCatParentId('');
       loadAllData();
     } catch (err: any) {
       alert('카테고리 등록 에러: ' + err.message);
@@ -491,19 +496,26 @@ function DashboardContent() {
                     />
                   </div>
                 </div>
+
                 <div>
                   <label className="text-slate-500 font-bold block mb-1">카테고리</label>
                   <select
                     value={newCategoryId}
                     onChange={(e) => setNewCategoryId(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed] text-xs"
                   >
                     <option value="">카테고리 선택...</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name_ko} ({cat.name_en})</option>
+                    {categories.filter(c => !c.parent_id).map((main) => (
+                      <optgroup key={main.id} label={`${main.name_ko} (${main.name_en})`}>
+                        <option value={main.id}>{main.name_ko} (대분류 전체)</option>
+                        {categories.filter(c => c.parent_id === main.id).map((sub) => (
+                          <option key={sub.id} value={sub.id}>{sub.name_ko} ({sub.name_en})</option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>
+
                 <div>
                   <label className="text-slate-500 font-bold block mb-1">전성분 정보 (Ingredients)</label>
                   <textarea
@@ -568,7 +580,6 @@ function DashboardContent() {
             </div>
           </div>
         )}
-
         {/* Tab 3: Categories (카테고리 구성) */}
         {activeTab === 'categories' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -597,9 +608,22 @@ function DashboardContent() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   />
                 </div>
+                <div>
+                  <label className="text-slate-500 font-bold block mb-1">상위 카테고리 (대분류)</label>
+                  <select
+                    value={newCatParentId}
+                    onChange={(e) => setNewCatParentId(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
+                  >
+                    <option value="">없음 (대분류로 생성)</option>
+                    {categories.filter(c => !c.parent_id).map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name_ko} ({cat.name_en})</option>
+                    ))}
+                  </select>
+                </div>
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#a855f7] text-white font-bold rounded-lg uppercase tracking-wider text-xs"
+                  className="w-full py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#a855f7] text-white font-bold rounded-lg uppercase tracking-wider text-xs cursor-pointer hover:opacity-90 transition-opacity"
                 >
                   카테고리 생성
                 </button>
@@ -608,13 +632,35 @@ function DashboardContent() {
 
             <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 lg:col-span-2 shadow-sm">
               <h3 className="text-sm font-black text-slate-800 mb-4 pb-2 border-b border-slate-100">구성된 카테고리 목록</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {categories.map((c) => (
-                  <div key={c.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                    <span className="font-extrabold text-slate-800 block text-xs">{c.name_ko}</span>
-                    <span className="text-[9px] text-slate-400 font-bold block uppercase mt-0.5">{c.name_en}</span>
-                  </div>
-                ))}
+              <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
+                {categories.filter(c => !c.parent_id).map((main) => {
+                  const subs = categories.filter(c => c.parent_id === main.id);
+                  return (
+                    <div key={main.id} className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                      <div className="flex justify-between items-center mb-3 pb-1.5 border-b border-slate-100">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-extrabold text-slate-900 text-xs sm:text-sm">{main.name_ko}</span>
+                          <span className="text-[9px] text-slate-400 font-bold uppercase">{main.name_en}</span>
+                        </div>
+                        <span className="text-[9px] bg-slate-200/80 text-slate-600 font-black px-2 py-0.5 rounded-full">
+                          소분류 {subs.length}개
+                        </span>
+                      </div>
+                      {subs.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {subs.map((sub) => (
+                            <div key={sub.id} className="p-2.5 bg-white border border-slate-200 rounded-lg hover:border-[#7c3aed]/30 hover:shadow-sm transition-all flex flex-col justify-center">
+                              <span className="font-bold text-slate-700 text-[11px]">{sub.name_ko}</span>
+                              <span className="text-[8px] text-slate-400 uppercase font-medium mt-0.5">{sub.name_en}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-slate-400 italic">등록된 하위 소분류가 없습니다.</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

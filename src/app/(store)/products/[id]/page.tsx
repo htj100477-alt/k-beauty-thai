@@ -19,9 +19,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-slate-100 p-4">
+      <div className="min-h-[50vh] flex flex-col items-center justify-center text-slate-800 p-4">
         <h2 className="text-lg font-bold mb-4">Product Not Found</h2>
-        <Link href="/" className="px-4 py-2 bg-emerald-600 rounded-lg text-xs font-bold">
+        <Link href="/" className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white rounded-lg text-xs font-bold transition-colors">
           Go Back Home
         </Link>
       </div>

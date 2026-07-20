@@ -43,13 +43,22 @@ export default async function Home({ searchParams }: PageProps) {
   try {
     let query = supabase.from('products').select('*').eq('is_active', true);
     if (activeCategoryId !== 'all') {
-      query = query.eq('category_id', activeCategoryId);
+      const subCategoryIds = categories.filter(c => c.parent_id === activeCategoryId).map(c => c.id);
+      if (subCategoryIds.length > 0) {
+        query = query.in('category_id', [activeCategoryId, ...subCategoryIds]);
+      } else {
+        query = query.eq('category_id', activeCategoryId);
+      }
     }
     const { data: productsData } = await query.order('created_at', { ascending: false });
     if (productsData) products = productsData;
   } catch (err) {
     console.warn('Failed to load products:', err);
   }
+
+  // Find currently active category details
+  const activeCategory = categories.find(c => c.id === activeCategoryId);
+  const activeParentId = activeCategory ? (activeCategory.parent_id || activeCategory.id) : null;
 
   // Calculate some simple counts for stats
   const productsCount = products.length;
@@ -137,9 +146,11 @@ export default async function Home({ searchParams }: PageProps) {
         </div>
       </section>
 
-      {/* 3. Categories Horizontal Scroll */}
-      <section className="flex flex-col gap-2">
+      {/* 3. Categories Hierarchical Display */}
+      <section className="flex flex-col gap-2.5">
         <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wide px-1">K-Beauty 카테고리</h3>
+        
+        {/* Main Categories Row */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           <Link
             href="/"
@@ -151,20 +162,52 @@ export default async function Home({ searchParams }: PageProps) {
           >
             전체 (All)
           </Link>
-          {categories.map((cat) => (
+          {categories.filter(c => !c.parent_id).map((cat) => {
+            const isActiveParent = activeParentId === cat.id;
+            return (
+              <Link
+                key={cat.id}
+                href={`/?category=${cat.id}`}
+                className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                  isActiveParent
+                    ? 'bg-[#0d9488] text-white border-[#0d9488] shadow-sm'
+                    : 'bg-white border-[#e2e8f0] text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {cat.name_ko}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Subcategories Row */}
+        {activeParentId && categories.some(c => c.parent_id === activeParentId) && (
+          <div className="flex gap-1.5 overflow-x-auto py-1 px-1 bg-slate-100 rounded-xl border border-[#e2e8f0]/60 scrollbar-none">
             <Link
-              key={cat.id}
-              href={`/?category=${cat.id}`}
-              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
-                activeCategoryId === cat.id
-                  ? 'bg-[#0d9488] text-white border-[#0d9488] shadow-sm'
-                  : 'bg-white border-[#e2e8f0] text-slate-500 hover:text-slate-800'
+              href={`/?category=${activeParentId}`}
+              className={`flex-shrink-0 px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                activeCategoryId === activeParentId
+                  ? 'bg-white text-[#0d9488] shadow-sm'
+                  : 'text-slate-400 hover:text-slate-700'
               }`}
             >
-              {cat.name_ko}
+              전체보기
             </Link>
-          ))}
-        </div>
+            {categories.filter(c => c.parent_id === activeParentId).map((sub) => (
+              <Link
+                key={sub.id}
+                href={`/?category=${sub.id}`}
+                className={`flex-shrink-0 px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                  activeCategoryId === sub.id
+                    ? 'bg-white text-[#0d9488] shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {sub.name_ko}
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 4. Product Grid (2-Column Premium Mobile Layout) */}

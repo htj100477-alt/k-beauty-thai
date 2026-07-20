@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { THAILAND_PROVINCES } from '@/utils/addresses';
+import SafeImage from '@/components/SafeImage';
 
 interface ProductDetailClientProps {
   product: {
@@ -100,96 +101,96 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   };
 
   return (
-    <main className="py-6 px-4 w-full flex flex-col gap-6">
+    <main className="py-6 px-4 w-full flex flex-col gap-6 bg-[#f4f6fa]">
       {/* Back button */}
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-400 transition-colors">
+      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-[#0d9488] transition-colors font-bold">
         ← Back to Storefront
       </Link>
 
       {/* Image Block */}
-      <div className="glass-panel p-3 aspect-square bg-[#0f0e15] rounded-xl overflow-hidden border border-slate-900 flex items-center justify-center">
-        <img
+      <div className="bg-white border border-[#e2e8f0] p-3 aspect-square rounded-2xl overflow-hidden shadow-sm flex items-center justify-center">
+        <SafeImage
           src={product.thumbnail_url}
           alt={product.name}
-          className="w-full h-full object-cover rounded-lg"
+          className="w-full h-full object-cover rounded-xl"
         />
       </div>
 
       {/* Product Info Block */}
       <div className="flex flex-col gap-4">
         <div>
-          <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-1">
+          <span className="text-[10px] font-bold text-[#0d9488] uppercase tracking-widest block mb-1">
             {product.brand}
           </span>
-          <h1 className="text-lg font-bold text-slate-100 leading-snug">
+          <h1 className="text-lg font-extrabold text-slate-800 leading-snug">
             {product.name}
           </h1>
         </div>
 
         {/* Pricing Panel */}
-        <div className="glass-panel p-4 border-l-4 border-l-emerald-500 bg-slate-900/10">
-          <span className="text-[10px] text-slate-500 block line-through mb-0.5">
+        <div className="bg-white border border-[#e2e8f0] p-4 rounded-2xl border-l-4 border-l-[#0d9488] shadow-sm">
+          <span className="text-[10px] text-slate-400 block line-through mb-0.5">
             {product.price_krw.toLocaleString()}원 (올리브영 정가)
           </span>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-black text-slate-100 tracking-tight">
+            <span className="text-3xl font-black text-slate-800 tracking-tight">
               {parseFloat(product.price_thb as any).toLocaleString()}
             </span>
-            <span className="text-lg font-bold text-gradient">THB</span>
+            <span className="text-lg font-bold text-[#0d9488]">THB</span>
           </div>
-          <span className="text-[9px] text-slate-500 block mt-1">
+          <span className="text-[9px] text-slate-400 block mt-1">
             * 관부가세(DDP) 및 한-태 국제배송료가 포함된 최종 금액입니다.
           </span>
         </div>
 
         {/* Custom Warning: Order Limits */}
-        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-2.5 items-start">
-          <span className="text-amber-400 text-sm">⚠️</span>
-          <div className="text-[10px] text-slate-300">
-            <p className="font-bold text-amber-400 mb-0.5">태국 개인 직구 한도 준수</p>
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex gap-2.5 items-start">
+          <span className="text-amber-500 text-sm">⚠️</span>
+          <div className="text-[10px] text-slate-600">
+            <p className="font-bold text-amber-800 mb-0.5">태국 개인 직구 한도 준수</p>
             <p>자가사용 통관을 위해 **동일 품목 최대 3개**, **총 화장품 15개**까지만 합배송이 가능합니다.</p>
           </div>
         </div>
 
         <button
           onClick={() => setOrderModalOpen(true)}
-          className="w-full py-3.5 bg-gradient-primary rounded-xl font-bold text-slate-950 uppercase tracking-wider text-xs shadow-lg shadow-emerald-500/20 hover:scale-[1.01] active:scale-95 transition-all duration-300"
+          className="w-full py-3.5 bg-[#0d9488] hover:bg-[#0f766e] active:scale-[0.98] rounded-xl font-bold text-white uppercase tracking-wider text-xs shadow-md transition-all duration-300"
         >
           PromptPay Order (주문하기)
         </button>
       </div>
 
       {/* Specifications & Ingredients Table */}
-      <section className="glass-panel p-4 text-xs">
-        <h2 className="text-sm font-bold mb-4 text-slate-200 pb-1.5 border-b border-slate-900">
+      <section className="bg-white border border-[#e2e8f0] p-4 rounded-2xl shadow-sm text-xs">
+        <h2 className="text-sm font-bold mb-4 text-slate-800 pb-1.5 border-b border-slate-100">
           제품 상세 고시 (Specifications)
         </h2>
         
-        <table className="w-full text-slate-300">
+        <table className="w-full text-slate-700">
           <tbody>
-            <tr className="border-b border-slate-900/50">
-              <th className="py-2.5 w-1/3 text-slate-400 font-medium">제조국</th>
-              <td className="py-2.5 text-slate-200">대한민국 (ROK)</td>
+            <tr className="border-b border-slate-100">
+              <th className="py-2.5 w-1/3 text-slate-500 font-semibold text-left">제조국</th>
+              <td className="py-2.5 text-slate-700">대한민국 (ROK)</td>
             </tr>
             {product.ingredients && (
-              <tr className="border-b border-slate-900/50">
-                <th className="py-2.5 text-slate-400 font-medium valign-top">전성분</th>
-                <td className="py-2.5 text-slate-300 text-[10px] leading-relaxed max-h-24 overflow-y-auto block">
+              <tr className="border-b border-slate-100">
+                <th className="py-2.5 text-slate-500 font-semibold text-left valign-top">전성분</th>
+                <td className="py-2.5 text-slate-600 text-[10px] leading-relaxed max-h-24 overflow-y-auto block">
                   {product.ingredients}
                 </td>
               </tr>
             )}
             {product.precautions && (
-              <tr className="border-b border-slate-900/50">
-                <th className="py-2.5 text-slate-400 font-medium valign-top">주의사항</th>
-                <td className="py-2.5 text-slate-300 text-[10px] leading-relaxed">
+              <tr className="border-b border-slate-100">
+                <th className="py-2.5 text-slate-500 font-semibold text-left valign-top">주의사항</th>
+                <td className="py-2.5 text-slate-600 text-[10px] leading-relaxed">
                   {product.precautions}
                 </td>
               </tr>
             )}
-            <tr className="border-b border-slate-900/50">
-              <th className="py-2.5 text-slate-400 font-medium">배송무게</th>
-              <td className="py-2.5 text-slate-200">{product.weight_grams} g</td>
+            <tr className="border-b border-slate-100">
+              <th className="py-2.5 text-slate-500 font-semibold text-left">배송무게</th>
+              <td className="py-2.5 text-slate-700">{product.weight_grams} g</td>
             </tr>
           </tbody>
         </table>
@@ -197,12 +198,12 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
       {/* Product Description Image */}
       {product.detail_description_image && (
-        <section className="glass-panel p-3">
-          <h2 className="text-xs font-bold mb-3 text-slate-200 pb-1 border-b border-slate-900">
+        <section className="bg-white border border-[#e2e8f0] p-3 rounded-2xl shadow-sm">
+          <h2 className="text-xs font-bold mb-3 text-slate-800 pb-1 border-b border-slate-100">
             상세 이미지 (K-Beauty Info)
           </h2>
-          <div className="w-full bg-[#0f0e15] rounded-lg overflow-hidden border border-slate-900">
-            <img
+          <div className="w-full bg-slate-50 rounded-xl overflow-hidden border border-slate-200">
+            <SafeImage
               src={product.detail_description_image}
               alt="Detail Description"
               className="w-full object-contain"
@@ -213,69 +214,69 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
       {/* PromptPay Order Drawer Modal */}
       {orderModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-filter backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-panel max-w-[420px] w-full p-6 relative flex flex-col max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xl max-w-[420px] w-full p-6 relative flex flex-col max-h-[85vh] overflow-y-auto">
             <button
               onClick={() => {
                 setOrderModalOpen(false);
                 setOrderSuccess(false);
               }}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white text-base"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-base"
             >
               ✕
             </button>
 
             {!orderSuccess ? (
               <>
-                <h3 className="text-base font-bold mb-1 text-slate-100">Checkout (주문하기)</h3>
+                <h3 className="text-base font-bold mb-1 text-slate-800">Checkout (주문하기)</h3>
                 <p className="text-[10px] text-slate-500 mb-5">
                   กรุณาโอนเงินผ่าน PromptPay และระบุที่อยู่จัดส่งให้ถูกต้อง
                 </p>
 
                 {/* PromptPay QR Code Mockup */}
-                <div className="flex flex-col items-center p-4 bg-white rounded-xl mb-5 shadow-inner">
+                <div className="flex flex-col items-center p-4 bg-slate-50 rounded-xl mb-5 border border-slate-200">
                   <span className="text-[10px] text-slate-950 font-bold tracking-widest uppercase mb-1.5">PromptPay (พร้อมเพย์)</span>
-                  <div className="w-32 h-32 bg-slate-100 flex flex-col items-center justify-center border border-slate-300 relative rounded-lg">
+                  <div className="w-32 h-32 bg-white flex flex-col items-center justify-center border border-slate-300 relative rounded-lg">
                     <span className="text-2xl">📱</span>
                     <span className="text-[9px] text-slate-500 font-bold mt-1">Scan QR Code</span>
                     <div className="absolute inset-1.5 border border-dashed border-emerald-500 pointer-events-none"></div>
                   </div>
-                  <span className="text-sm font-bold text-slate-950 mt-3">
+                  <span className="text-sm font-bold text-slate-800 mt-3">
                     Amount: {parseFloat(product.price_thb as any).toLocaleString()} THB
                   </span>
                   <span className="text-[9px] text-slate-500 mt-0.5">Tax ID: 01055XXXXXXXX</span>
                 </div>
 
                 {/* Delivery Form */}
-                <form onSubmit={handlePlaceOrder} className="flex flex-col gap-3 text-xs text-slate-200">
+                <form onSubmit={handlePlaceOrder} className="flex flex-col gap-3 text-xs text-slate-700">
                   <div>
-                    <label className="text-[9px] text-slate-400 block mb-0.5">ชื่อผู้รับ (Full Name)</label>
+                    <label className="text-[9px] text-slate-500 block mb-0.5">ชื่อผู้รับ (Full Name)</label>
                     <input
                       type="text"
                       required
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Somchai Somboon"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#0d9488] focus:bg-white transition-all"
                     />
                   </div>
                   
                   <div>
-                    <label className="text-[9px] text-slate-400 block mb-0.5">เบอร์โทร (Phone Number)</label>
+                    <label className="text-[9px] text-slate-500 block mb-0.5">เบอร์โทร (Phone Number)</label>
                     <input
                       type="tel"
                       required
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="081-234-5678"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#0d9488] focus:bg-white transition-all"
                     />
                   </div>
 
                   {/* Thai Address Selector Dropdowns */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[9px] text-slate-400 block mb-0.5">จังหวัด (Province)</label>
+                      <label className="text-[9px] text-slate-500 block mb-0.5">จังหวัด (Province)</label>
                       <select
                         required
                         value={selectedProvinceId}
@@ -283,7 +284,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                           setSelectedProvinceId(parseInt(e.target.value));
                           setSelectedDistrictId(-1); // Reset district
                         }}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#0d9488] focus:bg-white transition-all"
                       >
                         <option value="-1">선택하세요...</option>
                         {THAILAND_PROVINCES.map((prov) => (
@@ -295,13 +296,13 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     </div>
 
                     <div>
-                      <label className="text-[9px] text-slate-400 block mb-0.5">อำเภอ/เขต (District)</label>
+                      <label className="text-[9px] text-slate-500 block mb-0.5">อำเภอ/เขต (District)</label>
                       <select
                         required
                         disabled={selectedProvinceId === -1}
                         value={selectedDistrictId}
                         onChange={(e) => setSelectedDistrictId(parseInt(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#0d9488] focus:bg-white transition-all disabled:opacity-50"
                       >
                         <option value="-1">선택하세요...</option>
                         {districtsList.map((dist) => (
@@ -314,26 +315,26 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                   </div>
 
                   <div>
-                    <label className="text-[9px] text-slate-400 block mb-0.5">ที่อยู่โดยละเอียด (Address Detail)</label>
+                    <label className="text-[9px] text-slate-500 block mb-0.5">ที่อยู่โดยละเอียด (Address Detail)</label>
                     <textarea
                       required
                       rows={2}
                       value={addressDetail}
                       onChange={(e) => setAddressDetail(e.target.value)}
                       placeholder="수쿰빗 21가 12/3번지, 우편번호 포함 입력"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 resize-none"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#0d9488] focus:bg-white transition-all resize-none"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[9px] text-slate-400 block mb-0.5">슬립 업로드 (Receipt Upload)</label>
+                    <label className="text-[9px] text-slate-500 block mb-0.5">슬립 업로드 (Receipt Upload)</label>
                     <button
                       type="button"
                       onClick={() => setProofUploaded(true)}
                       className={`w-full py-2 rounded-lg border text-[10px] font-bold transition-colors ${
                         proofUploaded
-                          ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400'
-                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                          ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100/50'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-100/50'
                       }`}
                     >
                       {proofUploaded ? '✓ Slip Uploaded (영수증 완료)' : '📷 Click to Upload Slip (영수증 등록)'}
@@ -343,7 +344,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full mt-3 py-2.5 bg-gradient-primary rounded-lg font-bold text-slate-950 text-xs tracking-wider uppercase disabled:opacity-50"
+                    className="w-full mt-3 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white rounded-lg font-bold text-xs tracking-wider uppercase disabled:opacity-50 transition-all"
                   >
                     {loading ? 'Submitting...' : 'Confirm Order (주문서 제출)'}
                   </button>
@@ -352,8 +353,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             ) : (
               <div className="flex flex-col items-center py-6 text-center text-xs">
                 <span className="text-4xl mb-3">🎉</span>
-                <h3 className="text-base font-bold text-slate-100 mb-1.5">Order Confirmed!</h3>
-                <p className="text-[10px] text-slate-400 mb-5 max-w-[240px]">
+                <h3 className="text-base font-bold text-slate-800 mb-1.5">Order Confirmed!</h3>
+                <p className="text-[10px] text-slate-500 mb-5 max-w-[240px]">
                   ได้รับสลิปเรียบร้อย ระบบ에 주문이 정상 접수되었습니다. (배송 5~7일 소요)
                 </p>
                 <button
@@ -367,7 +368,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     setAddressDetail('');
                     setProofUploaded(false);
                   }}
-                  className="px-5 py-1.5 bg-emerald-600 rounded-lg font-bold"
+                  className="px-5 py-1.5 bg-[#0d9488] text-white hover:bg-[#0f766e] rounded-lg font-bold transition-colors"
                 >
                   OK (확인)
                 </button>
