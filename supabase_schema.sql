@@ -1,5 +1,13 @@
 -- Supabase Database Schema for K-Beauty Thai Direct Purchase E-commerce
 
+-- 0. Wipe existing database structures to prevent schema collision (Fresh Install)
+DROP TABLE IF EXISTS public.order_items CASCADE;
+DROP TABLE IF EXISTS public.orders CASCADE;
+DROP TABLE IF EXISTS public.products CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.settings CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
 -- 1. Create Profiles Table (Synced automatically with auth.users)
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
@@ -12,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- Enable RLS on Profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- Drop and Recreate policies for Profiles (Guaranteed table exists now)
+-- Drop and Recreate policies for Profiles
 DROP POLICY IF EXISTS "Allow users to read their own profile" ON public.profiles;
 CREATE POLICY "Allow users to read their own profile" ON public.profiles
     FOR SELECT USING (auth.uid() = id);

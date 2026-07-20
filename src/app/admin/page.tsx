@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
 interface Order {
@@ -47,11 +48,20 @@ interface UserProfile {
   created_at: string;
 }
 
-export default function AdminDashboard() {
+function DashboardContent() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  // Active Tab State
+  // Active Tab determined from Search Params or local fallback
+  const tabParam = searchParams.get('tab') || 'orders';
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'categories' | 'users' | 'settings'>('orders');
+
+  useEffect(() => {
+    if (tabParam === 'orders' || tabParam === 'products' || tabParam === 'categories' || tabParam === 'users' || tabParam === 'settings') {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   // Database States
   const [exchangeRate, setExchangeRate] = useState(38.0);
@@ -63,11 +73,11 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
 
+  // Stats
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+
   // Form States
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatus, setSyncStatus] = useState('');
-  
-  // Product Form
   const [newGoodsNo, setNewGoodsNo] = useState('');
   const [newBrand, setNewBrand] = useState('');
   const [newName, setNewName] = useState('');
@@ -79,7 +89,6 @@ export default function AdminDashboard() {
   const [newIngredients, setNewIngredients] = useState('');
   const [newPrecautions, setNewPrecautions] = useState('');
 
-  // Category Form
   const [newCatKo, setNewCatKo] = useState('');
   const [newCatEn, setNewCatEn] = useState('');
 
@@ -104,7 +113,7 @@ export default function AdminDashboard() {
       const { data: prodData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
       if (prodData) setProducts(prodData);
 
-      // 4. Profiles (Staff & Customers)
+      // 4. Profiles
       const { data: profileData } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
       if (profileData) setProfiles(profileData);
 
@@ -115,8 +124,15 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false });
 
       if (ordersData) {
+        let revSum = 0;
+        let pendCount = 0;
         const formatted: Order[] = ordersData.map(o => {
           const firstItem = o.order_items?.[0];
+          const amount = parseFloat(o.total_amount_thb);
+          revSum += amount;
+          if (o.status !== 'shipped' && o.status !== 'completed') {
+            pendCount++;
+          }
           return {
             id: o.id.substring(0, 8).toUpperCase(),
             customerName: o.customer_name,
@@ -125,13 +141,15 @@ export default function AdminDashboard() {
             goodsName: firstItem?.products?.name || 'K-Beauty Sourced Items',
             goodsNo: firstItem?.products?.goods_no || '',
             originalKrw: firstItem?.products?.price_krw || 0,
-            finalThb: parseFloat(o.total_amount_thb),
+            finalThb: amount,
             status: o.status,
             trackingNumber: o.tracking_number,
             createdTime: new Date(o.created_at).toLocaleString()
           };
         });
         setOrders(formatted);
+        setTotalRevenue(revSum);
+        setPendingCount(pendCount);
       }
     } catch (err) {
       console.error('Failed to load DB data:', err);
@@ -142,7 +160,7 @@ export default function AdminDashboard() {
     loadAllData();
   }, [supabase]);
 
-  // Pricing engine helper
+  // Pricing Engine calculations
   const calculateThb = (krw: number, weightGrams: number) => {
     const weightKg = weightGrams / 1000;
     const baseThb = krw / exchangeRate;
@@ -162,7 +180,6 @@ export default function AdminDashboard() {
     const calculatedThb = calculateThb(newPriceKrw, newWeight);
     const catObj = categories.find(c => c.id === newCategoryId);
 
-    // If thumbnail/detail images are empty, automatically format them to reference Supabase Storage
     const defaultThumbnail = newThumbnail || `https://gmjcsnmlyyjnraqiqqwg.supabase.co/storage/v1/object/public/product-images/${newGoodsNo}.jpg`;
     const defaultDetail = newDetailImg || `https://gmjcsnmlyyjnraqiqqwg.supabase.co/storage/v1/object/public/product-images/${newGoodsNo}_detail.jpg`;
 
@@ -185,7 +202,6 @@ export default function AdminDashboard() {
       if (error) throw error;
       alert('상품이 성공적으로 추가되었습니다!');
       
-      // Reset Form
       setNewGoodsNo('');
       setNewBrand('');
       setNewName('');
@@ -255,14 +271,14 @@ export default function AdminDashboard() {
       for (const item of updates) {
         await supabase.from('settings').upsert(item);
       }
-      alert('설정이 데이터베이스에 실시간 반영되었습니다!');
+      alert('설정이 실시간 반영되었습니다!');
       loadAllData();
     } catch (err: any) {
       alert('설정 저장 에러: ' + err.message);
     }
   };
 
-  // Promote/Demote User Role (Staff Management)
+  // Manage Roles
   const handleUpdateRole = async (profileId: string, newRole: string) => {
     try {
       const { error } = await supabase
@@ -278,6 +294,7 @@ export default function AdminDashboard() {
     }
   };
 
+  // Input Tracking number
   const handleInputTracking = async (orderId: string) => {
     const tracking = prompt('송장 번호(AWB)를 입력해 주세요:');
     if (tracking) {
@@ -300,302 +317,247 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      {/* Dashboard Sub Header */}
-      <div className="flex justify-between items-center bg-slate-900/30 p-6 rounded-2xl border border-slate-900">
-        <div>
-          <h2 className="text-xl font-bold text-slate-100">B2C 직구 플랫폼 총괄 제어</h2>
-          <p className="text-xs text-slate-500 mt-1">Super Admin & Staff 권한으로 주문 소싱 및 설정을 조율합니다.</p>
+    <div className="flex flex-col gap-6">
+      
+      {/* Metrics Cards Grid matching 2nd screenshot */}
+      <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="bg-white border border-[#e2e8f0] p-4 rounded-xl shadow-sm flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase">👥 전체 직원</span>
+          <span className="text-2xl font-black text-slate-800 mt-2">
+            {profiles.filter(p => p.role === 'admin' || p.role === 'staff').length}명
+          </span>
         </div>
-        <div className="flex gap-3 text-xs">
-          <div className="bg-[#12111d] px-4 py-2 rounded-lg border border-slate-900">
-            <span className="text-slate-500 block">Total Orders</span>
-            <span className="text-base font-bold text-slate-200">{orders.length} 건</span>
-          </div>
-          <div className="bg-[#12111d] px-4 py-2 rounded-lg border border-slate-900">
-            <span className="text-slate-500 block">Sourced Products</span>
-            <span className="text-base font-bold text-emerald-400">{products.length} 개</span>
-          </div>
+        <div className="bg-white border border-[#e2e8f0] p-4 rounded-xl shadow-sm flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase">📁 활성 카테고리</span>
+          <span className="text-2xl font-black text-slate-800 mt-2">{categories.length}개</span>
         </div>
-      </div>
+        <div className="bg-white border border-[#e2e8f0] p-4 rounded-xl shadow-sm flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase">💄 등록 상품</span>
+          <span className="text-2xl font-black text-slate-800 mt-2">{products.length}개</span>
+        </div>
+        <div className="bg-white border border-[#e2e8f0] p-4 rounded-xl shadow-sm flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase">📦 전체 주문</span>
+          <span className="text-2xl font-black text-slate-800 mt-2">{orders.length}건</span>
+        </div>
+        <div className="bg-white border border-[#e2e8f0] p-4 rounded-xl shadow-sm flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase">💰 총 매출 (THB)</span>
+          <span className="text-2xl font-black text-emerald-600 mt-2">
+            {totalRevenue.toLocaleString()} <span className="text-xs">฿</span>
+          </span>
+        </div>
+        <div className="bg-white border border-[#e2e8f0] p-4 rounded-xl shadow-sm flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase">⏳ 승인 대기</span>
+          <span className="text-2xl font-black text-rose-500 mt-2">{pendingCount}건</span>
+        </div>
+      </section>
 
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-900 gap-2">
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-            activeTab === 'orders' ? 'border-b-emerald-500 text-emerald-400' : 'border-b-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          📦 주문 관리 ({orders.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('products')}
-          className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-            activeTab === 'products' ? 'border-b-emerald-500 text-emerald-400' : 'border-b-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          💄 상품 등록/관리 ({products.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('categories')}
-          className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-            activeTab === 'categories' ? 'border-b-emerald-500 text-emerald-400' : 'border-b-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          📁 카테고리 구성 ({categories.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('users')}
-          className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-            activeTab === 'users' ? 'border-b-emerald-500 text-emerald-400' : 'border-b-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          👥 스탭 & 회원 관리 ({profiles.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('settings')}
-          className={`px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-            activeTab === 'settings' ? 'border-b-emerald-500 text-emerald-400' : 'border-b-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          ⚙️ 정산 설정
-        </button>
-      </div>
-
-      {/* Tab Contents */}
-      <div className="min-h-[50vh]">
+      {/* Main Tab Area */}
+      <div className="mt-2">
         
-        {/* Tab 1: Orders */}
+        {/* Tab 1: Orders (최근 주문 현황) */}
         {activeTab === 'orders' && (
-          <section className="glass-panel p-6 flex flex-col gap-6">
-            <h3 className="text-sm font-bold text-slate-200 pb-2 border-b border-slate-900">주문 리스트 대시보드</h3>
+          <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-6 pb-2 border-b border-slate-100">
+              <h3 className="text-sm font-black text-slate-800">최근 주문 현황 (Recent Orders)</h3>
+              <span className="text-[10px] text-slate-400">최신 주문건부터 나열됩니다.</span>
+            </div>
+
             {orders.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                {orders.map((order) => (
-                  <div key={order.id} className="p-4 bg-slate-900/20 border border-slate-900 rounded-xl flex flex-col gap-4">
-                    <div className="flex justify-between items-center border-b border-slate-900/50 pb-2">
-                      <div>
-                        <span className="text-xs font-mono text-emerald-400 font-bold">{order.id}</span>
-                        <span className="text-[10px] text-slate-500 block">{order.createdTime}</span>
-                      </div>
-                      <span className={`px-2.5 py-0.5 text-[9px] font-bold rounded-md uppercase ${
-                        order.status === 'shipped' 
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                          : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-                      <div>
-                        <p className="text-slate-500 font-bold mb-1">소싱 타깃 상품</p>
-                        <p className="text-slate-200">{order.goodsName}</p>
-                        <button
-                          onClick={() => handleCopyClipboard(`https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${order.goodsNo}`, '올리브영 구매 링크')}
-                          className="text-[10px] text-emerald-400 underline hover:text-emerald-300 mt-2 block"
-                        >
-                          🔗 올리브영 상품 상세링크 복사
-                        </button>
-                      </div>
-
-                      <div>
-                        <p className="text-slate-500 font-bold mb-1">태국 배송지 주소 (Shipping Address)</p>
-                        <p className="text-slate-200">{order.customerName} ({order.customerPhone})</p>
-                        <p className="text-slate-400 mt-1 leading-relaxed">{order.shippingAddress}</p>
-                        <button
-                          onClick={() => handleCopyClipboard(`${order.customerName}\n${order.customerPhone}\n${order.shippingAddress}`, '배송지 정보')}
-                          className="text-[10px] text-amber-400 underline hover:text-amber-300 mt-2 block"
-                        >
-                          📋 주소 복사 (물류사 발송용)
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2 border-t border-slate-900/40">
-                      <div className="text-xs text-slate-400">
-                        매입 원가: <span className="text-slate-200 font-mono">{order.originalKrw.toLocaleString()}원</span> | 
-                        결제금액: <span className="text-gradient font-bold ml-1">{order.finalThb.toLocaleString()} THB</span>
-                      </div>
-
-                      <div className="flex gap-2">
-                        {order.status !== 'shipped' ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-[10px] text-slate-400 uppercase font-black tracking-wider border-b border-[#e2e8f0]">
+                      <th className="py-3 px-4">구매자 (Buyer)</th>
+                      <th className="py-3 px-4">전화번호</th>
+                      <th className="py-3 px-4">상품명 / 올리브영 링크</th>
+                      <th className="py-3 px-4">TOTAL (THB)</th>
+                      <th className="py-3 px-4">송장/상태</th>
+                      <th className="py-3 px-4">작성일 (Created)</th>
+                      <th className="py-3 px-4 text-center">상태 변경</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((order) => (
+                      <tr key={order.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                        <td className="py-4 px-4 font-bold text-slate-800">{order.customerName}</td>
+                        <td className="py-4 px-4 font-mono font-bold text-slate-500">{order.customerPhone}</td>
+                        <td className="py-4 px-4 max-w-[200px]">
+                          <span className="block text-slate-800 font-bold truncate">{order.goodsName}</span>
                           <button
-                            onClick={() => handleInputTracking(order.id)}
-                            className="px-3.5 py-1.5 bg-slate-900 border border-slate-800 text-slate-200 text-xs font-bold rounded-lg hover:bg-emerald-600 hover:text-white transition-all"
+                            onClick={() => handleCopyClipboard(`https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${order.goodsNo}`, '상품 링크')}
+                            className="text-[9px] text-[#7c3aed] font-extrabold hover:underline mt-0.5 block"
                           >
-                            송장번호(AWB) 등록
+                            🔗 올리브영 원본 소싱 링크 복사
                           </button>
-                        ) : (
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                            <span>✈️ 송장등록 완료:</span>
-                            <span className="text-emerald-400 font-mono font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-900">
-                              {order.trackingNumber}
+                        </td>
+                        <td className="py-4 px-4 font-mono font-extrabold text-slate-800">
+                          {order.finalThb.toLocaleString()} ฿
+                        </td>
+                        <td className="py-4 px-4">
+                          {order.trackingNumber ? (
+                            <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100 font-mono text-[10px] font-bold">
+                              AWB: {order.trackingNumber}
                             </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold">
+                              {order.status}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 text-slate-400 text-[10px]">{order.createdTime}</td>
+                        <td className="py-4 px-4 text-center">
+                          {order.status !== 'shipped' ? (
+                            <button
+                              onClick={() => handleInputTracking(order.id)}
+                              className="px-3 py-1 bg-white border border-[#e2e8f0] text-slate-700 hover:bg-[#7c3aed] hover:text-white hover:border-[#7c3aed] rounded-lg text-[10px] font-bold shadow-sm transition-all"
+                            >
+                              송장 등록
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 font-bold">발송완료</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
-              <p className="text-center py-12 text-slate-500 text-xs">접수된 주문이 없습니다.</p>
+              <div className="text-center py-12 text-slate-400 text-xs">
+                접수된 주문 내역이 없습니다.
+              </div>
             )}
-          </section>
+          </div>
         )}
 
-        {/* Tab 2: Products */}
+        {/* Tab 2: Products (전체 상품 관리) */}
         {activeTab === 'products' && (
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Add Product Form */}
-            <div className="glass-panel p-6 h-fit flex flex-col gap-4">
-              <h3 className="text-sm font-bold text-slate-200 pb-2 border-b border-slate-900">신규 상품 등록</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Add product */}
+            <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm h-fit">
+              <h3 className="text-sm font-black text-slate-800 mb-4 pb-2 border-b border-slate-100">신규 상품 등록</h3>
               <form onSubmit={handleAddProduct} className="flex flex-col gap-3 text-xs">
                 <div>
-                  <label className="text-slate-400 block mb-1">상품 고유번호 (Goods No) *</label>
+                  <label className="text-slate-500 font-bold block mb-1">올리브영 상품 고유번호 (Goods No) *</label>
                   <input
                     type="text"
                     required
                     value={newGoodsNo}
                     onChange={(e) => setNewGoodsNo(e.target.value)}
-                    placeholder="예: A000000247086"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                    placeholder="A000000XXXXXXXX"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">브랜드명 (Brand) *</label>
+                  <label className="text-slate-500 font-bold block mb-1">브랜드명 (Brand) *</label>
                   <input
                     type="text"
                     required
                     value={newBrand}
                     onChange={(e) => setNewBrand(e.target.value)}
-                    placeholder="예: 다슈 (DASHU)"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                    placeholder="다슈 (DASHU)"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">상품명 (Product Name) *</label>
+                  <label className="text-slate-500 font-bold block mb-1">상품명 (Product Name) *</label>
                   <input
                     type="text"
                     required
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    placeholder="올리브영 공식 상품명"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                    placeholder="공식 명칭 기입"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-slate-400 block mb-1">원화가(KRW) *</label>
+                    <label className="text-slate-500 font-bold block mb-1">원화가(KRW) *</label>
                     <input
                       type="number"
                       required
                       value={newPriceKrw}
                       onChange={(e) => setNewPriceKrw(parseInt(e.target.value))}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                     />
                   </div>
                   <div>
-                    <label className="text-slate-400 block mb-1">무게(g)</label>
+                    <label className="text-slate-500 font-bold block mb-1">무게(g)</label>
                     <input
                       type="number"
                       value={newWeight}
                       onChange={(e) => setNewWeight(parseInt(e.target.value))}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">카테고리</label>
+                  <label className="text-slate-500 font-bold block mb-1">카테고리</label>
                   <select
                     value={newCategoryId}
                     onChange={(e) => setNewCategoryId(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   >
-                    <option value="">선택 안함</option>
+                    <option value="">카테고리 선택...</option>
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name_ko} ({cat.name_en})</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">썸네일 이미지 주소</label>
-                  <input
-                    type="text"
-                    value={newThumbnail}
-                    onChange={(e) => setNewThumbnail(e.target.value)}
-                    placeholder="공란 시 storage 업로드 파일명 매핑"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-slate-400 block mb-1">상세 설명 이미지 주소</label>
-                  <input
-                    type="text"
-                    value={newDetailImg}
-                    onChange={(e) => setNewDetailImg(e.target.value)}
-                    placeholder="공란 시 storage 업로드 파일명 매핑"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-slate-400 block mb-1">전성분 정보 (Ingredients)</label>
+                  <label className="text-slate-500 font-bold block mb-1">전성분 정보 (Ingredients)</label>
                   <textarea
                     value={newIngredients}
                     onChange={(e) => setNewIngredients(e.target.value)}
                     rows={2}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 resize-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed] resize-none"
                   />
                 </div>
-
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-gradient-primary text-slate-950 font-bold rounded-lg uppercase tracking-wider text-xs"
+                  className="w-full py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#a855f7] text-white font-bold rounded-lg uppercase tracking-wider text-xs"
                 >
                   상품 등록하기
                 </button>
               </form>
             </div>
 
-            {/* Products List Table */}
-            <div className="glass-panel p-6 lg:col-span-2 flex flex-col gap-4">
-              <h3 className="text-sm font-bold text-slate-200 pb-2 border-b border-slate-900">등록된 상품 리스트</h3>
-              
+            {/* List products */}
+            <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 lg:col-span-2 shadow-sm">
+              <h3 className="text-sm font-black text-slate-800 mb-4 pb-2 border-b border-slate-100">등록된 상품 목록</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left text-slate-300">
-                  <thead className="bg-[#0f0e15] text-[10px] text-slate-400 uppercase tracking-wider">
-                    <tr>
+                <table className="w-full text-xs text-left">
+                  <thead>
+                    <tr className="bg-slate-50 text-[10px] text-slate-400 uppercase font-black tracking-wider border-b border-[#e2e8f0]">
                       <th className="py-3 px-2">이미지</th>
-                      <th className="py-3 px-2">브랜드/상품명</th>
+                      <th className="py-3 px-2">상품명</th>
                       <th className="py-3 px-2">원화가(KRW)</th>
                       <th className="py-3 px-2">바트가(THB)</th>
-                      <th className="py-3 px-2">상태</th>
+                      <th className="py-3 px-2">노출 여부</th>
                     </tr>
                   </thead>
                   <tbody>
                     {products.map((p) => (
-                      <tr key={p.id} className="border-b border-slate-900 hover:bg-slate-900/10">
+                      <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50/50">
                         <td className="py-3 px-2">
-                          <img src={p.thumbnail_url} alt={p.name} className="w-10 h-10 object-cover rounded border border-slate-800" />
+                          <img src={p.thumbnail_url} alt={p.name} className="w-10 h-10 object-cover rounded-lg border border-slate-200" />
                         </td>
-                        <td className="py-3 px-2 max-w-[200px]">
-                          <span className="text-[10px] text-emerald-400 block font-bold">{p.brand}</span>
-                          <span className="text-slate-100 font-medium truncate block">{p.name}</span>
+                        <td className="py-3 px-2 max-w-[240px]">
+                          <span className="text-[9px] text-purple-600 font-extrabold uppercase block">{p.brand}</span>
+                          <span className="text-slate-800 font-bold truncate block mt-0.5">{p.name}</span>
                         </td>
-                        <td className="py-3 px-2 font-mono">{p.price_krw.toLocaleString()}원</td>
-                        <td className="py-3 px-2 font-mono text-emerald-400 font-bold">{parseFloat(p.price_thb as any).toLocaleString()} THB</td>
+                        <td className="py-3 px-2 font-mono font-bold">{p.price_krw.toLocaleString()}원</td>
+                        <td className="py-3 px-2 font-mono text-emerald-600 font-black">{parseFloat(p.price_thb as any).toLocaleString()} THB</td>
                         <td className="py-3 px-2">
                           <button
                             onClick={() => handleToggleActive(p.id, p.is_active)}
-                            className={`px-2 py-1 rounded text-[10px] font-bold ${
+                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold border transition-colors ${
                               p.is_active 
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                                : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                                : 'bg-slate-50 text-slate-400 border-slate-200'
                             }`}
                           >
-                            {p.is_active ? '판매중' : '비공개'}
+                            {p.is_active ? '공개 중' : '비공개'}
                           </button>
                         </td>
                       </tr>
@@ -604,109 +566,108 @@ export default function AdminDashboard() {
                 </table>
               </div>
             </div>
-          </section>
+          </div>
         )}
 
-        {/* Tab 3: Categories */}
+        {/* Tab 3: Categories (카테고리 구성) */}
         {activeTab === 'categories' && (
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="glass-panel p-6 h-fit flex flex-col gap-4">
-              <h3 className="text-sm font-bold text-slate-200 pb-2 border-b border-slate-900">신규 카테고리 구성</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm h-fit">
+              <h3 className="text-sm font-black text-slate-800 mb-4 pb-2 border-b border-slate-100">새 카테고리 추가</h3>
               <form onSubmit={handleAddCategory} className="flex flex-col gap-3 text-xs">
                 <div>
-                  <label className="text-slate-400 block mb-1">카테고리 한글명 *</label>
+                  <label className="text-slate-500 font-bold block mb-1">카테고리 한글명 *</label>
                   <input
                     type="text"
                     required
                     value={newCatKo}
                     onChange={(e) => setNewCatKo(e.target.value)}
                     placeholder="예: 스킨케어"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">카테고리 영문명 (Thai/English 노출용) *</label>
+                  <label className="text-slate-500 font-bold block mb-1">카테고리 영문명 *</label>
                   <input
                     type="text"
                     required
                     value={newCatEn}
                     onChange={(e) => setNewCatEn(e.target.value)}
                     placeholder="예: Skincare"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-gradient-primary text-slate-950 font-bold rounded-lg uppercase tracking-wider text-xs"
+                  className="w-full py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#a855f7] text-white font-bold rounded-lg uppercase tracking-wider text-xs"
                 >
-                  카테고리 추가
+                  카테고리 생성
                 </button>
               </form>
             </div>
 
-            <div className="glass-panel p-6 lg:col-span-2 flex flex-col gap-4">
-              <h3 className="text-sm font-bold text-slate-200 pb-2 border-b border-slate-900">구성된 카테고리 리스트</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 lg:col-span-2 shadow-sm">
+              <h3 className="text-sm font-black text-slate-800 mb-4 pb-2 border-b border-slate-100">구성된 카테고리 목록</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {categories.map((c) => (
-                  <div key={c.id} className="p-3 bg-slate-900/30 border border-slate-900 rounded-lg text-xs">
-                    <span className="font-bold text-slate-200 block">{c.name_ko}</span>
-                    <span className="text-[10px] text-slate-500 block mt-0.5">{c.name_en}</span>
+                  <div key={c.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="font-extrabold text-slate-800 block text-xs">{c.name_ko}</span>
+                    <span className="text-[9px] text-slate-400 font-bold block uppercase mt-0.5">{c.name_en}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </section>
+          </div>
         )}
 
-        {/* Tab 4: Users (Staff & Customer Management) */}
+        {/* Tab 4: Users (스탭 & 회원 관리) */}
         {activeTab === 'users' && (
-          <section className="glass-panel p-6 flex flex-col gap-4">
-            <h3 className="text-sm font-bold text-slate-200 pb-2 border-b border-slate-900">회원 권한 등급 제어 (B2C전용)</h3>
+          <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm">
+            <h3 className="text-sm font-black text-slate-800 mb-4 pb-2 border-b border-slate-100">회원 등급 및 권한 설정 (B2C)</h3>
             <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left text-slate-300">
-                <thead className="bg-[#0f0e15] text-[10px] text-slate-400 uppercase tracking-wider">
-                  <tr>
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="bg-slate-50 text-[10px] text-slate-400 uppercase font-black tracking-wider border-b border-[#e2e8f0]">
                     <th className="py-3 px-3">가입 전화번호 ID</th>
                     <th className="py-3 px-3">가입 일자</th>
                     <th className="py-3 px-3">현재 등급 (Role)</th>
-                    <th className="py-3 px-3 text-right">등급 관리</th>
+                    <th className="py-3 px-3 text-right">등급 변경 권한</th>
                   </tr>
                 </thead>
                 <tbody>
                   {profiles.map((user) => (
-                    <tr key={user.id} className="border-b border-slate-900 hover:bg-slate-900/10">
-                      <td className="py-3 px-3 font-mono font-bold text-slate-200">{user.phone_number}</td>
-                      <td className="py-3 px-3 text-slate-500">{new Date(user.created_at).toLocaleString()}</td>
-                      <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                      <td className="py-3.5 px-3 font-mono font-bold text-slate-800">{user.phone_number}</td>
+                      <td className="py-3.5 px-3 text-slate-400 text-[10px]">{new Date(user.created_at).toLocaleString()}</td>
+                      <td className="py-3.5 px-3">
+                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase ${
                           user.role === 'admin' 
-                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
+                            ? 'bg-rose-50 text-rose-600 border border-rose-100' 
                             : user.role === 'staff'
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                            : 'bg-slate-800 text-slate-400 border border-slate-700'
+                            ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
                         }`}>
                           {user.role === 'admin' ? 'Super Admin' : user.role === 'staff' ? 'Staff' : 'Customer (손님)'}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-right flex gap-1.5 justify-end">
-                        {user.role !== 'admin' && (
+                      <td className="py-3.5 px-3 text-right flex gap-1.5 justify-end">
+                        {user.role !== 'admin' ? (
                           <>
                             <button
                               onClick={() => handleUpdateRole(user.id, 'staff')}
-                              className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 rounded text-[10px] font-bold"
+                              className="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-600 rounded text-[9px] font-bold"
                             >
-                              스탭 위임
+                              스탭 부여
                             </button>
                             <button
                               onClick={() => handleUpdateRole(user.id, 'user')}
-                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded text-[10px] font-bold"
+                              className="px-2 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 rounded text-[9px] font-bold"
                             >
                               손님 강등
                             </button>
                           </>
-                        )}
-                        {user.role === 'admin' && (
-                          <span className="text-[10px] text-slate-500 italic">변경 불가 (최고 소유자)</span>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 italic">변경 불가 (최고 어드민)</span>
                         )}
                       </td>
                     </tr>
@@ -714,66 +675,78 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
-          </section>
+          </div>
         )}
 
-        {/* Tab 5: Settings */}
+        {/* Tab 5: Settings (정산 설정) */}
         {activeTab === 'settings' && (
-          <section className="glass-panel p-6 max-w-md mx-auto">
-            <h3 className="text-sm font-bold text-slate-200 pb-2 border-b border-slate-900 mb-4">정산 설정 (Pricing Engine Config)</h3>
+          <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm max-w-md mx-auto">
+            <h3 className="text-sm font-black text-slate-800 mb-6 pb-2 border-b border-slate-100">정산 설정 (Pricing Engine Config)</h3>
             <form onSubmit={handleUpdateSettings} className="flex flex-col gap-4 text-xs">
               <div>
-                <label className="text-slate-400 block mb-1">기준 환율 (Exchange Rate)</label>
+                <label className="text-slate-500 font-bold block mb-1">기준 환율 (Exchange Rate)</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500">1 THB =</span>
+                  <span className="text-slate-400">1 THB =</span>
                   <input
                     type="number"
                     step="0.1"
                     value={exchangeRate}
                     onChange={(e) => setExchangeRate(parseFloat(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   />
-                  <span className="text-slate-500">KRW</span>
+                  <span className="text-slate-400">KRW</span>
                 </div>
               </div>
               
               <div>
-                <label className="text-slate-400 block mb-1">구매대행 마진율 (Margin %)</label>
+                <label className="text-slate-500 font-bold block mb-1">구매대행 마진율 (Margin %)</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
                     value={margin}
                     onChange={(e) => setMargin(parseInt(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   />
-                  <span className="text-slate-500">%</span>
+                  <span className="text-slate-400">%</span>
                 </div>
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1">한타이쉬핑 DDP 요율 (DDP Rate/kg)</label>
+                <label className="text-slate-500 font-bold block mb-1">한타이쉬핑 DDP 요율 (DDP Rate/kg)</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
                     value={ddpFee}
                     onChange={(e) => setDdpFee(parseInt(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#7c3aed]"
                   />
-                  <span className="text-slate-500">THB/kg</span>
+                  <span className="text-slate-400">THB/kg</span>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-slate-800 border border-slate-700 text-slate-200 font-semibold rounded-lg text-xs uppercase tracking-wider hover:bg-emerald-600 hover:text-white hover:border-emerald-500 transition-all duration-300"
+                className="w-full py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#a855f7] text-white font-bold rounded-lg uppercase tracking-wider text-xs shadow-md"
               >
-                설정 저장 (Save Settings)
+                정산 설정 저장
               </button>
             </form>
-          </section>
+          </div>
         )}
 
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="p-8 text-center text-slate-400 text-xs">
+        대시보드 불러오는 중...
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
