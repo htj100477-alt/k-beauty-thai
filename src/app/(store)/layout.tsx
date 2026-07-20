@@ -17,12 +17,12 @@ export default function StoreLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#eaedf2] flex justify-center items-start">
+    <div className="h-screen w-screen bg-[#eaedf2] flex justify-center items-center p-0 sm:p-4 md:p-6 overflow-hidden">
       {/* Mobile Frame Container matching phoneswitchhub */}
-      <div className="w-full max-w-[480px] min-h-screen bg-[#f4f6fa] border-x border-[#e2e8f0] shadow-2xl relative pb-28 flex flex-col justify-between">
+      <div className="w-full max-w-[480px] h-full sm:h-[92vh] sm:max-h-[880px] bg-[#f4f6fa] sm:rounded-[2rem] sm:border sm:border-slate-300/80 sm:shadow-2xl relative flex flex-col justify-between overflow-hidden">
         
         {/* Top Navbar matching 3rd screenshot */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e2e8f0] px-5 py-4 flex justify-between items-center">
+        <header className="bg-white border-b border-[#e2e8f0] px-5 py-4 flex justify-between items-center z-40 flex-shrink-0 w-full">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#0d9488] to-[#14b8a6] flex items-center justify-center text-white text-base shadow-sm">
               🌿
@@ -41,13 +41,13 @@ export default function StoreLayout({
           </div>
         </header>
 
-        {/* Content Area */}
-        <div className="flex-grow w-full">
+        {/* Contained Scrollable Content Area */}
+        <div className="flex-grow w-full overflow-y-auto pb-24 scrollbar-none">
           {children}
         </div>
 
         {/* Bottom Tab Navigator matching 3rd screenshot */}
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white/95 backdrop-blur-md border-t border-[#e2e8f0] h-16 px-6 flex justify-around items-center z-50 shadow-lg">
+        <nav className="absolute bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-[#e2e8f0] h-16 px-6 flex justify-around items-center z-50 shadow-lg">
           <Link 
             href="/" 
             className={`flex flex-col items-center gap-0.5 transition-colors ${
