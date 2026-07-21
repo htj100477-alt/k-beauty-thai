@@ -158,7 +158,7 @@ export default async function Home({ searchParams }: PageProps) {
     <main className="flex flex-col bg-[#eef2f6]" style={{ paddingLeft: '20px', paddingRight: '20px', paddingTop: '24px', paddingBottom: '24px', gap: '24px', boxSizing: 'border-box' }}>
       
       {/* 1. Gradient Hero Banner matching 3rd screenshot */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-tr from-[#6366f1] via-[#8b5cf6] to-[#ec4899] p-6 text-white shadow-md">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-tr from-[#6366f1] via-[#8b5cf6] to-[#ec4899] text-white shadow-md" style={{ padding: '24px', boxSizing: 'border-box' }}>
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
         
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-extrabold uppercase tracking-wide mb-3 backdrop-blur-sm">
@@ -177,11 +177,11 @@ export default async function Home({ searchParams }: PageProps) {
         <div className="flex gap-6 border-t border-white/20 pt-3">
           <div className="flex flex-col">
             <span className="text-[20px] font-black">{productsCount || 6}</span>
-            <span className="text-[9px] text-white/70 uppercase">등록 상품</span>
+            <span className="text-[10px] font-bold text-white/90">등록 상품</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[20px] font-black">{categoriesCount || 5}</span>
-            <span className="text-[9px] text-white/70 uppercase">활성 카테고리</span>
+            <span className="text-[10px] font-bold text-white/90">활성 카테고리</span>
           </div>
         </div>
       </section>
