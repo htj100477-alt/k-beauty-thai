@@ -251,8 +251,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           </div>
         </div>
 
-        {/* Thai Detail Infographic Poster Image */}
-        {product.detail_description_image && (
+        {/* Thai Detail Infographic Poster Image (Only rendered when distinct from top thumbnail) */}
+        {product.detail_description_image && product.detail_description_image !== product.thumbnail_url && (
           <div className="w-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-xs mt-1">
             <SafeImage
               src={product.detail_description_image}
