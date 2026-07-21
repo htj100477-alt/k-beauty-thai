@@ -14,11 +14,21 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const id = resolvedParams.id;
 
   const supabase = await createClient();
-  const { data: product, error } = await supabase
+  // goods_no (상품목록 링크) 또는 UUID id 둘 다 지원
+  let { data: product, error } = await supabase
     .from('products')
     .select('*')
     .eq('goods_no', id)
     .single();
+
+  // goods_no로 못찾으면 UUID id로 재시도
+  if (error || !product) {
+    ({ data: product, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single());
+  }
 
   if (error || !product) {
     return (
