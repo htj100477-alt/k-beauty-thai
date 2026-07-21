@@ -33,10 +33,36 @@ export default function StoreFrontClient({
     return allProducts.filter(p => p.category_id === activeCategoryId);
   }, [allProducts, activeCategoryId, categories]);
 
+  // Filter active categories that actually have at least 1 registered product
+  const activeCategoriesWithProducts = useMemo(() => {
+    const directCatIds = new Set(allProducts.map(p => p.category_id));
+    const activeSubIds = new Set<string>();
+    const activeMainIds = new Set<string>();
+
+    categories.forEach(c => {
+      if (directCatIds.has(c.id)) {
+        if (c.parent_id) {
+          activeSubIds.add(c.id);
+          activeMainIds.add(c.parent_id);
+        } else {
+          activeMainIds.add(c.id);
+        }
+      }
+    });
+
+    return categories.filter(c => {
+      if (c.parent_id) {
+        return activeSubIds.has(c.id);
+      } else {
+        return activeMainIds.has(c.id);
+      }
+    });
+  }, [categories, allProducts]);
+
   // Determine active parent category for subcategory row
   const activeCategory = useMemo(() => {
-    return categories.find(c => c.id === activeCategoryId);
-  }, [categories, activeCategoryId]);
+    return activeCategoriesWithProducts.find(c => c.id === activeCategoryId);
+  }, [activeCategoriesWithProducts, activeCategoryId]);
 
   const activeParentId = useMemo(() => {
     if (!activeCategory) return null;
@@ -155,7 +181,7 @@ export default function StoreFrontClient({
           >
             전체 (All)
           </button>
-          {categories.filter(c => !c.parent_id).map((cat) => {
+          {activeCategoriesWithProducts.filter(c => !c.parent_id).map((cat) => {
             const isActiveParent = activeParentId === cat.id;
             return (
               <button
@@ -175,7 +201,7 @@ export default function StoreFrontClient({
         </div>
 
         {/* Subcategories Row */}
-        {activeParentId && categories.some(c => c.parent_id === activeParentId) && (
+        {activeParentId && activeCategoriesWithProducts.some(c => c.parent_id === activeParentId) && (
           <div className="flex gap-1.5 overflow-x-auto py-1 px-1 bg-slate-100 rounded-xl border border-[#e2e8f0]/60 scrollbar-none">
             <button
               type="button"
@@ -188,7 +214,7 @@ export default function StoreFrontClient({
             >
               전체보기
             </button>
-            {categories.filter(c => c.parent_id === activeParentId).map((sub) => (
+            {activeCategoriesWithProducts.filter(c => c.parent_id === activeParentId).map((sub) => (
               <button
                 key={sub.id}
                 type="button"
@@ -211,28 +237,33 @@ export default function StoreFrontClient({
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
             <div key={product.id} className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md hover:border-[#0d9488]/30 transition-all duration-300 group">
-              {/* Full-bleed image at the top of the card */}
-              <div className="relative w-full aspect-square bg-[#f8fafc] overflow-hidden z-0">
-                <SafeImage
-                  src={product.thumbnail_url}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <span className="absolute top-2 left-2 px-2 py-0.5 text-[8px] font-black rounded bg-amber-500 text-white shadow-sm uppercase z-10">
-                  DDP 면세
-                </span>
-              </div>
-
-              {/* Padded details block below the image */}
-              <div className="flex-grow flex flex-col justify-between p-3 gap-3">
-                <div>
-                  <span className="text-[9px] font-extrabold text-[#0d9488] uppercase tracking-wider block">
-                    {product.brand}
+              <Link href={`/products/${product.goods_no}`} className="flex flex-col flex-grow cursor-pointer">
+                {/* Full-bleed image at the top of the card */}
+                <div className="relative w-full aspect-square bg-[#f8fafc] overflow-hidden z-0">
+                  <SafeImage
+                    src={product.thumbnail_url}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <span className="absolute top-2 left-2 px-2 py-0.5 text-[8px] font-black rounded bg-amber-500 text-white shadow-sm uppercase z-10">
+                    DDP 면세
                   </span>
-                  <h3 className="text-[11px] font-bold text-slate-800 line-clamp-2 h-8 leading-tight mt-0.5 overflow-hidden">
-                    {product.name}
-                  </h3>
                 </div>
+
+                {/* Padded details block below the image */}
+                <div className="flex-grow flex flex-col justify-between p-3 pb-0">
+                  <div>
+                    <span className="text-[9px] font-extrabold text-[#0d9488] uppercase tracking-wider block">
+                      {product.brand}
+                    </span>
+                    <h3 className="text-[11px] font-bold text-slate-800 line-clamp-2 h-8 leading-tight mt-0.5 overflow-hidden">
+                      {product.name}
+                    </h3>
+                  </div>
+                </div>
+              </Link>
+
+              <div className="p-3 pt-2">
 
                 <div className="border-t border-[#f1f5f9] flex flex-col" style={{ paddingTop: '8px', gap: '8px' }}>
                   <div className="flex flex-col">
