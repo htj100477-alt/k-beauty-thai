@@ -206,18 +206,51 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
         </table>
       </section>
 
-      {/* Product Description Image */}
+      {/* Product Description Image & Thai Infographic Highlights */}
       {product.detail_description_image && (
-        <section className="bg-white border border-[#e2e8f0] p-3 rounded-2xl shadow-sm">
-          <h2 className="text-xs font-bold mb-3 text-slate-800 pb-1 border-b border-slate-100">
-            상세 이미지 (K-Beauty Info)
+        <section className="bg-white border border-[#e2e8f0] p-4 rounded-2xl shadow-sm flex flex-col gap-4">
+          <h2 className="text-xs font-bold text-slate-800 pb-2 border-b border-slate-100 flex items-center gap-1.5">
+            <span>🇹🇭</span>
+            <span>รายละเอียดสินค้า (Product Info & Highlights)</span>
           </h2>
-          <div className="w-full bg-slate-50 rounded-xl overflow-hidden border border-slate-200">
+          
+          {/* Official Olive Young Full Detail Image - No crop */}
+          <div className="w-full rounded-xl overflow-hidden">
             <SafeImage
               src={product.detail_description_image}
-              alt="Detail Description"
+              alt="Official Product Detail Image"
               className="w-full object-contain"
             />
+          </div>
+
+          {/* Thai Translation Summary Box with real product data */}
+          <div className="bg-gradient-to-br from-[#f0fdf4] to-[#dcfce7] border border-[#86efac] p-4 rounded-2xl flex flex-col gap-3 shadow-sm">
+            <span className="text-[12px] font-extrabold text-[#15803d] flex items-center gap-1.5">
+              🇹🇭 ข้อมูลสินค้าแปลเป็นภาษาไทย
+            </span>
+            <div className="flex flex-col gap-2">
+              <div className="bg-white/70 rounded-xl p-3 flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-[#15803d] uppercase tracking-wide">🏷️ แบรนด์ / ชื่อสินค้า</span>
+                <span className="text-[12px] font-semibold text-slate-800">{product.brand}</span>
+                <span className="text-[11px] text-slate-600 leading-relaxed">{product.name}</span>
+              </div>
+              {product.ingredients && (
+                <div className="bg-white/70 rounded-xl p-3 flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-[#15803d] uppercase tracking-wide">🧪 ส่วนผสมหลัก (Ingredients)</span>
+                  <span className="text-[11px] text-slate-600 leading-relaxed">{product.ingredients}</span>
+                </div>
+              )}
+              {product.precautions && (
+                <div className="bg-white/70 rounded-xl p-3 flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-[#f59e0b] uppercase tracking-wide">⚠️ ข้อควรระวัง (Precautions)</span>
+                  <span className="text-[11px] text-slate-600 leading-relaxed">{product.precautions}</span>
+                </div>
+              )}
+              <div className="bg-white/70 rounded-xl p-3 flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-[#15803d] uppercase tracking-wide">✅ รับประกัน</span>
+                <span className="text-[11px] text-slate-700">สินค้าแท้ 100% นำเข้าจากเกาหลี ผ่าน Olive Young Korea โดยตรง</span>
+              </div>
+            </div>
           </div>
         </section>
       )}

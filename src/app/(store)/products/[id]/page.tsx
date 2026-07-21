@@ -2,6 +2,9 @@ import { createClient } from '@/utils/supabase/server';
 import ProductDetailClient from './ProductDetailClient';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }

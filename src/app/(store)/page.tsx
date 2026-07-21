@@ -1,6 +1,9 @@
 import { createClient } from '@/utils/supabase/server';
 import StoreFrontClient from './StoreFrontClient';
 
+export const dynamic = 'force-dynamic';
+
+
 interface PageProps {
   searchParams: Promise<{ category?: string }>;
 }
