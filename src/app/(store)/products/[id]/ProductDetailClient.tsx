@@ -251,8 +251,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           </div>
         </div>
 
-        {/* Custom Detail Image if distinct from main thumbnail */}
-        {product.detail_description_image && product.detail_description_image !== product.thumbnail_url && !product.detail_description_image.includes('template_detail_') && (
+        {/* Custom Translated Thai Detail Image */}
+        {product.detail_description_image && product.detail_description_image.includes('_detail.jpg') && (
           <div className="w-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-xs">
             <SafeImage
               src={product.detail_description_image}
