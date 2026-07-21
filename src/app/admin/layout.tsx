@@ -1,9 +1,69 @@
-'use client';
-
-import React, { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
+
+function AdminLayoutNav() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'orders';
+
+  return (
+    <nav className="mt-8 flex flex-col gap-2 text-xs font-bold text-slate-500">
+      <span className="text-[9px] uppercase tracking-wider text-slate-400 px-3.5 mb-1 block">관리자 메뉴</span>
+      
+      <Link
+        href="/admin?tab=orders"
+        className={`flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all ${
+          activeTab === 'orders' ? 'bg-[#7c3aed]/10 text-[#7c3aed] font-extrabold' : 'hover:bg-slate-50 hover:text-slate-800'
+        }`}
+      >
+        <span className="text-base">📊</span>
+        개요 (Overview)
+      </Link>
+
+      <Link
+        href="/admin?tab=products"
+        className={`flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all ${
+          activeTab === 'products' ? 'bg-[#7c3aed]/10 text-[#7c3aed] font-extrabold' : 'hover:bg-slate-50 hover:text-slate-800'
+        }`}
+      >
+        <span className="text-base">💄</span>
+        전체 상품 (Products)
+      </Link>
+
+      <Link
+        href="/admin?tab=categories"
+        className={`flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all ${
+          activeTab === 'categories' ? 'bg-[#7c3aed]/10 text-[#7c3aed] font-extrabold' : 'hover:bg-slate-50 hover:text-slate-800'
+        }`}
+      >
+        <span className="text-base">📁</span>
+        카테고리 구성 (Categories)
+      </Link>
+
+      <Link
+        href="/admin?tab=users"
+        className={`flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all ${
+          activeTab === 'users' ? 'bg-[#7c3aed]/10 text-[#7c3aed] font-extrabold' : 'hover:bg-slate-50 hover:text-slate-800'
+        }`}
+      >
+        <span className="text-base">👥</span>
+        구매자 관리 (Customers)
+      </Link>
+
+      <Link
+        href="/admin?tab=settings"
+        className={`flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all ${
+          activeTab === 'settings' ? 'bg-[#7c3aed]/10 text-[#7c3aed] font-extrabold' : 'hover:bg-slate-50 hover:text-slate-800'
+        }`}
+      >
+        <span className="text-base">⚙️</span>
+        정산 설정 (Settings)
+      </Link>
+    </nav>
+  );
+}
 
 export default function AdminLayout({
   children,
@@ -123,51 +183,9 @@ export default function AdminLayout({
           </div>
 
           {/* Sidebar Menu matching 2nd screenshot */}
-          <nav className="mt-8 flex flex-col gap-2 text-xs font-bold text-slate-500">
-            <span className="text-[9px] uppercase tracking-wider text-slate-400 px-3.5 mb-1 block">관리자 메뉴</span>
-            
-            <Link
-              href="/admin?tab=orders"
-              className={`flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all ${
-                pathname === '/admin' ? 'bg-[#7c3aed]/10 text-[#7c3aed]' : 'hover:bg-slate-50 hover:text-slate-800'
-              }`}
-            >
-              <span className="text-base">📊</span>
-              개요 (Overview)
-            </Link>
-
-            <Link
-              href="/admin?tab=products"
-              className="flex items-center gap-3 px-3.5 py-3 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-all"
-            >
-              <span className="text-base">💄</span>
-              전체 상품 (Products)
-            </Link>
-
-            <Link
-              href="/admin?tab=categories"
-              className="flex items-center gap-3 px-3.5 py-3 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-all"
-            >
-              <span className="text-base">📁</span>
-              카테고리 구성 (Categories)
-            </Link>
-
-            <Link
-              href="/admin?tab=users"
-              className="flex items-center gap-3 px-3.5 py-3 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-all"
-            >
-              <span className="text-base">👥</span>
-              구매자 관리 (Customers)
-            </Link>
-
-            <Link
-              href="/admin?tab=settings"
-              className="flex items-center gap-3 px-3.5 py-3 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-all"
-            >
-              <span className="text-base">⚙️</span>
-              정산 설정 (Settings)
-            </Link>
-          </nav>
+          <Suspense fallback={null}>
+            <AdminLayoutNav />
+          </Suspense>
         </div>
 
         {/* User Card at bottom left matching 2nd screenshot */}
