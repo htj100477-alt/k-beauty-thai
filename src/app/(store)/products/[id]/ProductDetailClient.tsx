@@ -251,9 +251,9 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           </div>
         </div>
 
-        {/* Custom Translated Thai Detail Image */}
-        {product.detail_description_image && product.detail_description_image.includes('_detail.jpg') && (
-          <div className="w-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-xs">
+        {/* Thai Detail Infographic Poster Image */}
+        {product.detail_description_image && (
+          <div className="w-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-xs mt-1">
             <SafeImage
               src={product.detail_description_image}
               alt="Detail Description"
