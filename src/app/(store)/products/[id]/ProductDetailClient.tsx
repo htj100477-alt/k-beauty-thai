@@ -206,21 +206,62 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
         </table>
       </section>
 
-      {/* Product Description Image */}
-      {product.detail_description_image && (
-        <section className="bg-white border border-[#e2e8f0] p-3 rounded-2xl shadow-sm">
-          <h2 className="text-xs font-bold mb-3 text-slate-800 pb-1 border-b border-slate-100">
-            상세 이미지 (K-Beauty Info)
-          </h2>
-          <div className="w-full bg-slate-50 rounded-xl overflow-hidden border border-slate-200">
+      {/* Dynamic Thai Product Detail Infographic Card */}
+      <section className="bg-gradient-to-br from-white via-slate-50 to-teal-50/30 border border-[#e2e8f0] p-4 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="text-base">✨</span>
+            <h2 className="text-xs font-extrabold text-slate-800 tracking-wide uppercase">
+              รายละเอียดสินค้า (K-Beauty Detail Info)
+            </h2>
+          </div>
+          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-[#0d9488]/10 text-[#0d9488] border border-[#0d9488]/20">
+            ของแท้ 100% OLIVE YOUNG
+          </span>
+        </div>
+
+        {/* Feature Highlights Banner */}
+        <div className="bg-white rounded-xl p-3.5 border border-slate-200/60 shadow-xs flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-[#7c3aed] text-white uppercase">
+              {product.brand}
+            </span>
+            <span className="text-xs font-bold text-slate-700">
+              {product.category_name} พรีเมียมส่งตรงจากเกาหลี
+            </span>
+          </div>
+
+          <p className="text-xs font-extrabold text-slate-800 leading-snug">
+            {product.name}
+          </p>
+
+          <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-600 font-semibold">
+              <span className="text-emerald-500 font-bold">✓</span> ผิวสัมผัสอ่อนโยน เหมาะกับทุกสภาพผิว
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-600 font-semibold">
+              <span className="text-emerald-500 font-bold">✓</span> บำรุงล้ำลึก สารสกัดเกาหลี 100%
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-600 font-semibold">
+              <span className="text-emerald-500 font-bold">✓</span> ผ่านการทดสอบระคายเคืองผิว
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-600 font-semibold">
+              <span className="text-emerald-500 font-bold">✓</span> DDP 면세 통관 완료 항공직송
+            </div>
+          </div>
+        </div>
+
+        {/* Custom Detail Image if distinct from main thumbnail */}
+        {product.detail_description_image && product.detail_description_image !== product.thumbnail_url && !product.detail_description_image.includes('template_detail_') && (
+          <div className="w-full bg-white rounded-xl overflow-hidden border border-slate-200 shadow-xs">
             <SafeImage
               src={product.detail_description_image}
               alt="Detail Description"
               className="w-full object-contain"
             />
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* PromptPay Order Drawer Modal */}
       {orderModalOpen && (
