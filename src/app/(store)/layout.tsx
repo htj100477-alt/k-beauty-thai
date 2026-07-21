@@ -51,7 +51,7 @@ export default function StoreLayout({
           <Link 
             href="/" 
             className={`flex flex-col items-center gap-0.5 transition-colors ${
-              isActive('/') && !pathname.includes('login') ? 'text-[#0d9488]' : 'text-slate-400 hover:text-slate-600'
+              pathname === '/' ? 'text-[#0d9488]' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
             <span className="text-xl">🛍️</span>
@@ -59,16 +59,20 @@ export default function StoreLayout({
           </Link>
 
           <Link 
-            href="/?search=true" 
-            className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600"
+            href="/search" 
+            className={`flex flex-col items-center gap-0.5 transition-colors ${
+              pathname.startsWith('/search') ? 'text-[#0d9488]' : 'text-slate-400 hover:text-slate-600'
+            }`}
           >
             <span className="text-xl">🔍</span>
             <span className="text-[10px] font-bold">검색 (Search)</span>
           </Link>
 
           <Link 
-            href="/?cart=true" 
-            className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600"
+            href="/cart" 
+            className={`flex flex-col items-center gap-0.5 transition-colors ${
+              pathname.startsWith('/cart') ? 'text-[#0d9488]' : 'text-slate-400 hover:text-slate-600'
+            }`}
           >
             <span className="text-xl">🛒</span>
             <span className="text-[10px] font-bold">장바구니 (Cart)</span>
@@ -77,7 +81,7 @@ export default function StoreLayout({
           <Link 
             href="/login" 
             className={`flex flex-col items-center gap-0.5 transition-colors ${
-              isActive('/login') || pathname.startsWith('/admin') ? 'text-[#0d9488]' : 'text-slate-400 hover:text-slate-600'
+              pathname.startsWith('/login') || pathname.startsWith('/admin') ? 'text-[#0d9488]' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
             <span className="text-xl">👤</span>

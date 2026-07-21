@@ -103,9 +103,19 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   return (
     <main className="flex flex-col bg-[#eef2f6]" style={{ paddingLeft: '20px', paddingRight: '20px', paddingTop: '24px', paddingBottom: '24px', gap: '24px', boxSizing: 'border-box' }}>
       {/* Back button */}
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-[#0d9488] transition-colors font-bold">
-        ← Back to Storefront
-      </Link>
+      <button 
+        type="button" 
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.history.length > 1) {
+            router.back();
+          } else {
+            router.push('/');
+          }
+        }} 
+        className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-[#0d9488] transition-colors font-bold self-start cursor-pointer border-none bg-transparent p-0"
+      >
+        ← 뒤로 가기 (Back)
+      </button>
 
       {/* Image Block */}
       <div className="bg-white border border-[#e2e8f0] p-3 aspect-square rounded-2xl overflow-hidden shadow-sm flex items-center justify-center">

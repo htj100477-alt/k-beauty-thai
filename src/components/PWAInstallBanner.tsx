@@ -40,7 +40,7 @@ export default function PWAInstallBanner() {
         if (!dismissed) {
           setShowBanner(true);
         }
-      }, 2000);
+      }, 300);
       return () => clearTimeout(timer);
     }
 

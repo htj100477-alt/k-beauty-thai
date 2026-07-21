@@ -46,13 +46,8 @@ export default function PWARegister() {
           });
       };
 
-      // Register after page has fully loaded
-      if (document.readyState === 'complete') {
-        handleRegister();
-      } else {
-        window.addEventListener('load', handleRegister);
-        return () => window.removeEventListener('load', handleRegister);
-      }
+      // Register immediately for maximum speed
+      handleRegister();
     }
   }, []);
 
